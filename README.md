@@ -24,7 +24,8 @@ Pravidlá:
 - projekt je každý priečinok v koreni, v ktorom je `index.html`,
 - názov karty je `<title>` z `index.html` projektu (bez neho sa použije názov priečinka),
 - projekty sú v jednom zozname zoradené podľa názvu,
-- priečinky začínajúce na `_` alebo `.` sa ignorujú, hodia sa na rozpracované veci.
+- priečinky začínajúce na `_` alebo `.` sa ignorujú, hodia sa na rozpracované veci,
+- priečinok končiaci na `-dev` je vývojová verzia projektu a v zozname sa zobrazí s dodatkom „(dev)“.
 
 Lokálny náhľad: `python generate_index.py` (vygenerovaný súbor je v `.gitignore`).
 
@@ -36,6 +37,15 @@ Lokálny náhľad: `python generate_index.py` (vygenerovaný súbor je v `.gitig
 4. Nahraj zmeny na GitHub. Stránka aj rozcestník sa aktualizujú do 1–2 minút.
 
 Rozcestník sa nikde ručne nemení.
+
+## Vývojová verzia projektu (`-dev`)
+
+Zmena existujúceho projektu `projekt1` sa najprv nahrá do `projekt1-dev/`, aby sa dala pozrieť na reálnej adrese pred zverejnením. Robí sa to len na výslovné zadanie („urob to do -dev“), inak sa mení rovno `projekt1`.
+
+- **Schválenie:** `projekt1` sa úplne nahradí obsahom `projekt1-dev` (nie prekopírovanie cez starý obsah, aby neostali osirotené súbory) a `projekt1-dev` sa zmaže, všetko v jednom commite.
+- **Zamietnutie:** `projekt1-dev` sa zmaže.
+- `projekt1-dev` sa ponechá len na výslovné zadanie.
+- Projekty musia používať relatívne cesty, inak sa po presune rozbijú.
 
 ## Nastavenie GitHub Pages (jednorazovo)
 

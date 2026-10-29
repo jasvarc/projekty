@@ -9,6 +9,7 @@ Pravidlá:
 - projekt = priečinok v koreni, v ktorom existuje index.html
 - priečinky začínajúce na "." alebo "_" sa ignorujú (napr. _sablona)
 - názov karty = <title> z index.html projektu, inak názov priečinka
+- priečinok končiaci na "-dev" (vývojová verzia projektu) dostane k názvu karty " (dev)"
 - projekty sú v jednom zozname zoradené podľa názvu (bez ohľadu na diakritiku)
 - už existujúci index.html v koreni, ktorý nevznikol týmto skriptom (chýba v ňom značka), sa neprepíše
 """
@@ -72,8 +73,11 @@ for d in ROOT.iterdir():
         continue
     text = page.read_text(encoding="utf-8", errors="ignore")
     m = re.search(r"<title[^>]*>(.*?)</title>", text, re.I | re.S)
-    title = " ".join(m.group(1).split()) if m else ""
-    projects.append((d.name, html.unescape(title) or d.name))
+    title = html.unescape(" ".join(m.group(1).split())) if m else ""
+    label = title or d.name
+    if title and d.name.endswith("-dev") and not title.lower().endswith("(dev)"):
+        label += " (dev)"   # bez <title> je "-dev" vidno v názve priečinka
+    projects.append((d.name, label))
 
 projects.sort(key=lambda it: fold(it[1]))
 
