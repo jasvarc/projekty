@@ -1,4 +1,4 @@
-# Projekty
+# Pachove Projekty
 
 Zbierka malých projektov, každý ako samostatná statická stránka.
 
@@ -9,6 +9,7 @@ Web: https://jasvarc.github.io/projekty/
 ```
 generate_index.py                  generuje úvodný rozcestník (spúšťa sa automaticky pri pushi)
 .github/workflows/pages.yml        nasadenie na GitHub Pages
+logo.png                           logo v hlavičke rozcestníka a favicon
 hodiny/index.html                  jeden projekt = jeden priečinok s index.html
 ```
 

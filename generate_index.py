@@ -20,7 +20,7 @@ from urllib.parse import quote
 
 ROOT = Path(__file__).resolve().parent
 MARK = "<!-- generate_index.py -->"
-PAGE_TITLE = "Projekty"
+PAGE_TITLE = "Pachove Projekty"
 PAGE_SUB = "Zbierka malých projektov."
 
 CSS = """
@@ -29,8 +29,9 @@ CSS = """
 html{-webkit-text-size-adjust:100%}
 body{margin:0;min-height:100vh;font:17px/1.6 system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--text);background:radial-gradient(1200px 600px at 20% -10%,#101a33 0%,transparent 60%),var(--bg)}
 .wrap{max-width:1100px;margin:0 auto;padding:16px 16px 40px}
-.top{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:8px 0 28px}
-h1{margin:0;font-size:clamp(24px,5vw,34px);line-height:1.2}
+.top{display:flex;align-items:center;gap:18px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:8px 0 28px}
+.logo{width:96px;height:96px;flex:0 0 auto;border-radius:50%;display:block;box-shadow:0 0 0 2px var(--line),0 6px 18px rgba(0,0,0,.45)}
+h1{margin:0;font-size:16px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
 .sub{color:var(--muted);margin:6px 0 0}
 .sum{color:var(--muted);font-size:14px;margin:10px 0 0}
 ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
@@ -42,6 +43,7 @@ a.card:focus-visible{outline:3px solid var(--gold2);outline-offset:2px}
 a.card:hover .go{transform:translateX(4px)}
 .empty{color:var(--muted)}
 @media (max-width:520px){ul{grid-template-columns:1fr}}
+@media (max-width:420px){.logo{width:64px;height:64px}}
 @media (prefers-reduced-motion:reduce){a.card,.go{transition:none}a.card:hover{transform:none}}
 """
 
@@ -94,14 +96,18 @@ page = f"""<!DOCTYPE html>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#04060c">
   <title>{html.escape(PAGE_TITLE)}</title>
+  <link rel="icon" href="logo.png">
   <style>{CSS}</style>
 </head>
 <body>
   <div class="wrap">
     <header class="top">
-      <h1>{html.escape(PAGE_TITLE)}</h1>
-      <p class="sub">{html.escape(PAGE_SUB)}</p>
-      <p class="sum">{plural(len(projects), 'projekt', 'projekty', 'projektov')}</p>
+      <img class="logo" src="logo.png" width="96" height="96" alt="Logo – Pachove Projekty">
+      <div>
+        <h1>{html.escape(PAGE_TITLE)}</h1>
+        <p class="sub">{html.escape(PAGE_SUB)}</p>
+        <p class="sum">{plural(len(projects), 'projekt', 'projekty', 'projektov')}</p>
+      </div>
     </header>
 {body}
   </div>
