@@ -1,0 +1,1274 @@
+<!doctype html><html lang="sk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><style>body{margin:0}</style></head><body><title>Osievačka zeminy</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500&family=Barlow+Condensed:wght@600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one wide drawing stage, controls grouped under it, readouts and assumptions below. */
+:root{
+--bg:#F1F3F5;--panel:#FFFFFF;--ink:#14181B;--ink2:#4A5259;--line:#D3D9DE;--accent:#1F5FA8;--accent-ink:#FFFFFF;
+--fr:#6C737B;--rail:#4B5259;--wheel:#2B3036;--bar:#9AA1A8;--slot:#3A4047;
+--f-display:'Barlow Condensed','Arial Narrow',sans-serif;--f-body:'Barlow',system-ui,sans-serif;--f-mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+--bg:#0F1214;--panel:#161A1D;--ink:#E7EAEC;--ink2:#9FA7AF;--line:#2A3036;--accent:#6FA8E6;--accent-ink:#0F1214;
+--fr:#98A0A9;--rail:#B6BDC5;--wheel:#C4CAD1;--bar:#6A727B;--slot:#D9DEE3;color-scheme:dark}}
+:root[data-theme="dark"]{
+--bg:#0F1214;--panel:#161A1D;--ink:#E7EAEC;--ink2:#9FA7AF;--line:#2A3036;--accent:#6FA8E6;--accent-ink:#0F1214;
+--fr:#98A0A9;--rail:#B6BDC5;--wheel:#C4CAD1;--bar:#6A727B;--slot:#D9DEE3;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5;
+padding-block:20px 36px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+header{display:flex;flex-direction:column;gap:2px}
+.kick{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)}
+h1{font-family:var(--f-display);font-weight:600;font-size:clamp(30px,6vw,44px);line-height:1.05;margin:0;text-wrap:balance;letter-spacing:.01em}
+.sub{margin:4px 0 0;color:var(--ink2);max-width:62ch;text-wrap:pretty}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+#sv{display:block;width:100%;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.bar{display:flex;flex-wrap:wrap;gap:8px;padding:10px;border-top:1px solid var(--line)}
+button,select{font:inherit;font-size:14px;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:8px 12px;min-height:40px;cursor:pointer}
+button:hover{border-color:var(--ink2)}
+button[aria-pressed="true"],button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card h2{font-family:var(--f-display);font-weight:600;font-size:20px;margin:0;letter-spacing:.02em}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.row label{font-size:14px;color:var(--ink2);min-width:92px}
+.row input[type=range]{flex:1;min-width:120px;accent-color:var(--accent);height:28px}
+.val{font-family:var(--f-mono);font-size:13px;min-width:62px;text-align:right}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{border-top:2px solid var(--line);padding-top:6px;min-width:0}
+.stat b{display:block;font-family:var(--f-mono);font-weight:500;font-size:20px;font-variant-numeric:tabular-nums}
+.stat span{font-size:13px;color:var(--ink2)}
+ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--ink2)}
+.hint{font-size:13px;color:var(--ink2);margin:0}
+.cap{font-size:13px;color:var(--ink2);margin:0}
+.bom{display:flex;flex-direction:column;gap:12px}
+.bom-h{display:flex;flex-direction:column;gap:2px}
+.bom-h h2{font-family:var(--f-display);font-weight:600;font-size:26px;margin:0;letter-spacing:.02em}
+details.part{background:var(--panel);border:1px solid var(--line);border-radius:6px}
+details.part>summary{cursor:pointer;list-style:none;display:flex;align-items:baseline;gap:10px;padding:12px 14px;min-height:44px}
+details.part>summary::-webkit-details-marker{display:none}
+details.part>summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);color:var(--ink2)}
+details.part[open]>summary::after{content:"−"}
+details.part>summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.pc{font-family:var(--f-mono);font-size:13px;color:var(--accent);min-width:18px}
+.pt{font-family:var(--f-display);font-weight:600;font-size:20px;letter-spacing:.02em}
+.pn{padding:0 14px 8px;margin:0;font-size:14px;color:var(--ink2)}
+.tw{overflow-x:auto;padding:0 14px 12px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{font-family:var(--f-mono);font-weight:400;font-size:11px;letter-spacing:.06em;text-transform:uppercase;text-align:left;color:var(--ink2);border-bottom:1px solid var(--line);padding:6px 8px}
+.tbl td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl tr:last-child td{border-bottom:0}
+.tbl td.id{font-family:var(--f-mono);font-size:12px;color:var(--ink2);white-space:nowrap}
+.tbl td.q{font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums}
+.tbl td.n{color:var(--ink2)}
+.tag{display:inline-block;font-family:var(--f-mono);font-size:11px;border:1px solid var(--accent);color:var(--accent);border-radius:3px;padding:0 5px;margin-left:6px;white-space:nowrap}
+.sum{background:var(--panel);border:1px solid var(--accent);border-radius:6px;padding-bottom:4px}
+.sum h3{font-family:var(--f-display);font-weight:600;font-size:22px;margin:0;padding:12px 14px 4px;letter-spacing:.02em}
+.sum .foot{padding:6px 14px 12px;font-size:14px;color:var(--ink2);margin:0}
+.copy{margin:0 14px 12px}
+@media (max-width:640px){
+.tbl thead{display:none}
+.tbl,.tbl tbody{display:block}
+.tbl tr{display:grid;grid-template-columns:auto 1fr;column-gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.tbl tr:last-child{border-bottom:0}
+.tbl td{border:0;padding:1px 0;grid-column:2}
+.tbl td.id{grid-column:1;grid-row:1}
+.tbl td.q{color:var(--ink)}
+}
+.tbl td.m{font-weight:500}
+@media (max-width:640px){.tbl td.m{grid-column:1/-1}}
+.drw{display:flex;flex-direction:column;gap:14px}
+.dsec{font-family:var(--f-display);font-weight:600;font-size:22px;letter-spacing:.02em;margin:10px 0 0}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,520px),1fr));gap:12px}
+.dfull{display:flex;flex-direction:column;gap:12px}
+figure.fg{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px 12px;min-width:0}
+figure.fg figcaption{display:flex;flex-direction:column;gap:2px;margin-bottom:6px}
+.c1{font-family:var(--f-mono);font-size:13px}
+.c1 b{color:var(--accent);font-weight:500}
+.c2{color:var(--ink2);font-size:13px}
+.ik{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:10px;margin:8px 0}
+.ik.one{grid-template-columns:minmax(0,640px)}
+.ik figure{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 8px;min-width:0}
+.ik figcaption{font:600 12px var(--f-mono);color:var(--ink2);margin-bottom:2px}
+.ik svg{display:block;width:100%;height:auto}
+.ikp{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px}
+.ikp span{background:var(--panel);border:1px solid var(--accent);border-radius:4px;padding:2px 7px;font:12px var(--f-mono)}
+.ikp b{color:var(--accent)}
+.ikn{margin:4px 0 8px;font-size:14px;color:var(--ink2)}
+.sw{overflow-x:auto}
+.sw svg{display:block;min-width:640px;width:100%;height:auto}
+.sw.wide svg{min-width:700px}
+svg .ol{fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linejoin:round}
+svg .sh{fill:var(--bg);stroke:var(--ink);stroke-width:1.6;stroke-linejoin:round}
+svg .cl{fill:none;stroke:var(--ink2);stroke-width:1;stroke-dasharray:8 3 2 3}
+svg .dm{fill:none;stroke:var(--accent);stroke-width:1.2}
+svg .ex{stroke:var(--ink2);stroke-width:.8;stroke-dasharray:2 2}
+svg .hid{fill:none;stroke:var(--ink2);stroke-width:1;stroke-dasharray:5 4}
+svg .th3{fill:none;stroke:var(--ink);stroke-width:3.4;stroke-linecap:round}
+svg .fo{fill:none;stroke:var(--ink2);stroke-width:1.2;stroke-dasharray:10 4}
+details.part .stp{padding:4px 14px 14px}
+.stp ol{margin:8px 0;padding-left:22px}
+.stp li{margin:6px 0}
+.stp .chk{background:var(--panel);border-left:3px solid var(--accent);padding:8px 10px;margin:10px 0;font-size:14px}
+.stp .done{display:inline-flex;gap:6px;align-items:center;font-size:14px;cursor:pointer}
+svg text.dt{font:12px var(--f-mono);fill:var(--ink)}
+svg text.dx{fill:var(--accent)}
+@media (max-width:520px){.row label{min-width:100%}}
+</style>
+<div class="wrap">
+<div style="background:#f3b453;color:#14181B;padding:12px 16px;border-radius:8px;margin:0 0 16px;font:500 16px/1.4 var(--f-body);border:2px solid #14181B"><b>TESTOVACIA ZMENA (dev):</b> toto je vývojová verzia <code>osievacka-dev</code>. Ostrá verzia je v <code>/osievacka/</code>.</div>
+<header>
+<div class="kick">Koncepčný model · v15</div>
+<h1>Osievačka zeminy</h1>
+<p class="sub">Sklonné sito 150×120 cm na koľajniciach, vibrácia z excentra a ojnice, nízky lievik nad vozíkom. Ľavá a pravá strana sú z pohľadu od výsypu (stojíš pri fúriku): motor je vpravo. Ťahaním otáčaj modelom, posuvníkmi mení sklon a pohon.</p>
+</header>
+<section class="stage" aria-label="3D model osievačky">
+<svg id="sv" role="img" aria-label="Drôtový 3D model osievačky zeminy"><title>3D model osievačky</title></svg>
+<div class="bar" id="views">
+<button id="play" aria-pressed="true">Pauza</button>
+<button data-v="35,25">Zo vjazdu</button>
+<button data-v="145,22">Z výsypu</button>
+<button data-v="90,0">Bok</button>
+<button data-v="0,0">Spredu</button>
+<button data-v="0,90">Pôdorys</button>
+<button id="zm" aria-label="Oddialiť">−</button>
+<button id="zp" aria-label="Priblížiť">+</button>
+</div>
+</section>
+<div class="grid">
+<section class="card">
+<h2>Konštrukcia</h2>
+<div class="row"><label for="th">Sklon sita</label><input type="range" id="th" min="10" max="30" step="1" value="20"><span class="val" id="thv">20°</span></div>
+<p class="hint">Sklon sa nastavuje kolíkmi v perforovaných nosníkoch (krok otvorov 33 mm, teda asi 1,5°). Posuvník je plynulý len pre náhľad.</p>
+<div class="row"><label>Popisky</label><div class="seg"><button id="lb" aria-pressed="true">Zapnuté</button></div></div>
+</section>
+<section class="card">
+<h2>Pohon</h2>
+<div class="row"><label for="ratio">Prevod</label>
+<select id="ratio"><option value="5">i = 5 (290 ot/min)</option><option value="7.5" selected>i = 7,5 (193 ot/min)</option><option value="10">i = 10 (145 ot/min)</option></select></div>
+<div class="row"><label for="ecc">Excentricita</label><input type="range" id="ecc" min="25" max="35" step="1" value="25"><span class="val" id="eccv">25 mm</span></div>
+<div class="row"><label for="spd">Rýchlosť</label><input type="range" id="spd" min="1" max="100" step="1" value="6"><span class="val" id="spdv">6 %</span></div>
+<div class="row"><label>Zdvih</label><div class="seg"><button id="ex" aria-pressed="true">Zväčšený ×1,5</button></div></div>
+<p class="hint">Motor 400 V, 1450 ot/min. Rýchlosť 100 % je skutočný chod, nižšie hodnoty sú spomalenie na pozorovanie. Excentricita nemôže byť menšia ako asi 25 mm, lebo hriadeľ prevodovky má Ø25 a čap sa musí zmestiť vedľa neho. Pri prevode 5 je zrýchlenie už pri 25 mm príliš veľké.</p>
+</section>
+</div>
+<section class="card" aria-label="Údaje">
+<h2>Údaje pri aktuálnom nastavení</h2>
+<div class="stats">
+<div class="stat"><b id="s-rpm">193</b><span>otáčky excentra, ot/min</span></div>
+<div class="stat"><b id="s-st">40</b><span>zdvih sita, mm</span></div>
+<div class="stat"><b id="s-g">0,8</b><span>zrýchlenie, g (orientačne)</span></div>
+<div class="stat"><b id="s-lo">107</b><span>dolný okraj sita, cm nad zemou</span></div>
+<div class="stat"><b id="s-hi">158</b><span>horný okraj sita, cm nad zemou</span></div>
+</div>
+<p class="cap">Zrýchlenie vychádza z excentricity a otáčok (e·ω²). Vhodný rozsah okolo 0,7 až 1,5 g je môj odhad, nie overená hodnota.</p>
+</section>
+<section class="bom" aria-label="Rozpis materiálu">
+<div class="bom-h"><h2>Rozpis materiálu</h2>
+<p class="hint">Dĺžky vychádzajú z modelu (v mm, ak nie je uvedené inak). Pri rezaní pridaj 3 až 5 mm a pri nákupe asi 10 % rezervu. Rozmery profilov a komponentov sú moje odporúčania, pred nákupom ich over, hlavne pripojenie motora k prevodovke.</p></div>
+<div id="parts" class="bom"></div>
+<div class="sum" id="sumbox"></div>
+</section>
+<section class="card">
+<h2>Predpoklady modelu</h2>
+<ul>
+<li>Fúrik je pristavený k stroju zboku a stojí pozdĺž šírky sita, koleso je na strane motora (pod motorom, ktorý je vyššie) a rúčky na opačnej strane, oboje mimo rámu. Jeho korba je dlhá asi 80 cm a široká 60 cm (typický stavebný fúrik, svoj zmeraj). Výsyp je široký 65 cm, dno je strmšie ako sito (o 28°), takže sutina po ňom zíde aj pri 10° sklone sita. Okraj korby je 4 až 16 cm pod výsypom, v závislosti od sklonu.</li>
+<li>Všetky L profily sú 50×50×5, aby si kupoval jednu veľkosť.</li>
+<li>Sklon sa mení kolíkmi v perforovaných nosníkoch s krokom 33 mm (asi 1,5°), v modeli je plynulý len pre náhľad.</li>
+<li>Vozík 130×100×90 cm, spodná hrana lievika 92 cm nad zemou. Medzera nad okrajom vozíka je len 2 cm, odporúčam 3 až 5 cm.</li>
+<li>Traktor stojí priamo za vozíkom. Horný okraj sita je tesne nad zónou hlavy vodiča (oranžový obrys, výška je odhad).</li>
+<li>Motor je na výstuži naklápacích profilov, takže ojnica je pri každom sklone rovnobežná so sklonom.</li>
+<li>Chýba: vedenie kolies proti bočnému posunu, poistka kolíkov, spoločné zdvíhanie oboch strán, výstuhy pod pletivom v konečnej podobe.</li>
+<li>Model je koncepčný, bez pevnostného výpočtu.</li>
+</ul>
+</section>
+<section class="drw" aria-label="Výkresy">
+<div class="bom-h"><h2>Výkresy</h2>
+<p class="hint">Výkresy nie sú v mierke, rozhodujú kóty v mm. Uhol rezu je uhol medzi rezom a osou profilu, 90° je kolmý rez. Pri šikmých rezoch je uvedená dlhšia aj kratšia hrana. Pri vzperách a mitrách skontroluj dĺžku priložením na mieste. Číslovanie zodpovedá rozpisu vyššie.</p></div>
+<div id="dw"></div>
+</section>
+<section class="drw" aria-label="Montáž">
+<div class="bom-h"><h2>Zváranie a zostavenie krok za krokom</h2>
+<p class="hint">Postup od rezania po skúšobnú prevádzku. Výšky meraj od hornej plochy pätkovej platne, pravá strana je strana motora (pohľad od výsypu). Pri každom kroku je obrázok „pred“ (diely, ktoré pridávaš, sú modré a šípky ukazujú kam patria) a „po“ (ako stroj vyzerá po kroku), potom text postupu a kontrola, ktorú sprav pred ďalším krokom. Začiarknutie „Hotovo“ sa pamätá len v tvojom prehliadači.</p></div>
+<div id="gd" class="bom"></div>
+</section>
+</div>
+<script>
+(function(){
+var NS='http://www.w3.org/2000/svg';
+var svg=document.getElementById('sv');
+var st={yaw:35,pitch:25,th:20,lab:true,play:true,phase:0,spd:6,exag:true,ratio:7.5,ecc:25,zoom:1};
+var W=680,H=500,CX=70,CY=115,CZ=90,PZ=98,PY=189,SC=-54,LR=57;
+var R='#D85A30',RD='#993C1D',B='#378ADD',O='#EF9F27',G='#1D9E75',PU='#534AB7';
+var FR='var(--fr)',RL='var(--rail)',DK='var(--wheel)',BAR='var(--bar)',SL='var(--slot)',NEU='#B4B2A9';
+var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+if(reduce)st.play=false;
+function kin(){
+var e=st.ecc/10*(st.exag?1.5:1);
+var f=st.phase,sn=Math.sin(f),cs=Math.cos(f);
+var pinS=SC+e*cs,pinN=8+e*sn;
+var b=pinS+Math.sqrt(LR*LR-e*e*sn*sn);
+return {e:e,pinS:pinS,pinN:pinN,b:b,d:b-(SC+LR)};
+}
+function scene(){
+var a=st.th*Math.PI/180,c=Math.cos(a),s=Math.sin(a);
+var k=kin(),d=k.d;
+var Tr=function(x,q,n){return [x,PY-q*c+n*s,PZ+q*s+n*c];};
+var TT=function(x,q,n){return Tr(x,q+d,n);};
+var I=[],lab=[];
+var ln=function(p,q,col,w,dash,cap){I.push({k:'l',p:[p,q],col:col,w:w,dash:dash,cap:cap});};
+var pl=function(p,fill,op,stroke,sw){I.push({k:'p',p:p,fill:fill,op:op,stroke:stroke,sw:sw||0.6});};
+var lb=function(p,txt){lab.push({p:p,txt:txt});};
+var box=function(x0,y0,z0,x1,y1,z1,fill,op,edge){
+var v=[[x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0],[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]];
+[[0,1,2,3],[4,5,6,7],[0,1,5,4],[2,3,7,6],[1,2,6,5],[0,3,7,4]].forEach(function(f){pl(f.map(function(i){return v[i];}),fill,op,edge,0.5);});
+[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]].forEach(function(e){ln(v[e[0]],v[e[1]],edge,0.7);});
+};
+var wheelV=function(x,y,z,r){var pts=[];for(var i=0;i<16;i++){var f=i/16*2*Math.PI;pts.push([x,y+r*Math.cos(f),z+r*Math.sin(f)]);}pl(pts,DK,0.85,DK,0.6);};
+var wheelT=function(x,q,n,r){var pts=[];for(var i=0;i<16;i++){var f=i/16*2*Math.PI;pts.push(TT(x,q+r*Math.cos(f),n+r*Math.sin(f)));}pl(pts,DK,0.9,DK,0.5);};
+pl([[-70,-80,0],[150,-80,0],[150,310,0],[-70,310,0]],FR,0.07,FR,0.5);
+[0,140].forEach(function(x){
+ln([x,200,0],[x,200,PZ],FR,5);
+ln([x,60,0],[x,60,200],FR,5);
+ln([x,60,12],[x,200,12],FR,4);
+ln([x,60,85],[x,200,85],FR,4);
+ln([x,60,135],[x,105,85],FR,3);
+ln([x,200,55],[x,160,85],FR,3);
+});
+ln([0,200,18],[140,200,18],FR,4);
+ln([0,200,79],[140,200,79],FR,4);
+var t=[[14,48,102],[126,48,102],[126,192,102],[14,192,102]],b=[[22,50,92],[118,50,92],[118,182,92],[22,182,92]];
+for(var i=0;i<4;i++){var j=(i+1)%4;pl([t[i],t[j],b[j],b[i]],FR,i===0?0.5:0.3,FR,0.6);ln(t[i],t[j],FR,4);}
+ln([0,60,102],[14,60,102],FR,4);ln([140,60,102],[126,60,102],FR,4);
+ln([0,200,102],[14,192,102],FR,4);ln([140,200,102],[126,192,102],FR,4);
+box(20,48,12,120,178,90,B,0.1,B);
+wheelV(14,105,22,22);wheelV(126,105,22,22);
+box(22,-62,18,118,46,66,G,0.1,G);
+box(52,18,66,88,42,82,G,0.3,G);
+box(48,20,84,92,46,165,O,0.07,O);
+ln([70,46,35],[70,48,35],DK,3);
+wheelV(10,-20,26,26);wheelV(130,-20,26,26);
+box(30,204,30,110,264,58,NEU,0.22,FR);
+(function(){var pts=[];for(var i=0;i<16;i++){var f=i/16*2*Math.PI;pts.push([17+14*Math.cos(f),234,14+14*Math.sin(f)]);}pl(pts,DK,0.85,DK,0.6);})();
+ln([30,234,34],[17,234,14],FR,3);
+[214,254].forEach(function(y){ln([104,y,30],[104,y,0],FR,3);ln([110,y,38],[168,y,52],FR,3);});
+var zb=PZ+(PY-60)*Math.tan(a);
+[4,14,126,136].forEach(function(x){ln([x,60,112],[x,60,182],NEU,3,'3 3');});
+[[1,15],[125,139]].forEach(function(p){ln([p[0],60,zb-0.8],[p[1],60,zb-0.8],O,3);ln([p[0],60,zb+5.8],[p[1],60,zb+5.8],O,3);});
+lb([140,60,zb-16],'Kolíky N3');
+ln([0,200,PZ],[8,PY,PZ],FR,4);ln([140,200,PZ],[132,PY,PZ],FR,4);
+[[2,14],[126,138]].forEach(function(p){ln([p[0],PY,PZ],[p[1],PY,PZ],O,3);});
+ln(Tr(8,-70,0),Tr(8,145,0),RL,5);
+ln(Tr(132,-10,0),Tr(132,145,0),RL,5);
+ln(Tr(8,-6,-6),Tr(132,-6,-6),RL,4);
+ln(Tr(8,140,-4),Tr(132,140,-4),RL,4);
+ln(Tr(8,-45,-2),Tr(-50,-45,-2),FR,4);ln(Tr(8,-63,-2),Tr(-50,-63,-2),FR,4);
+pl([Tr(-55,-45,-2),Tr(-10,-45,-2),Tr(-10,-63,-2),Tr(-55,-63,-2)],FR,0.45,FR,0.6);
+ln(Tr(-55,SC,8),Tr(-28,SC,8),G,16,null,'butt');
+ln(Tr(-28,SC,8),Tr(-14,SC,8),PU,17,null,'butt');
+ln(Tr(-14,SC,8),Tr(-9,SC,8),DK,3);
+var dp=[];for(var q=0;q<20;q++){var f=q/20*2*Math.PI;dp.push(Tr(-10,SC+6*Math.cos(f),8+6*Math.sin(f)));}
+pl(dp,O,0.9,RD,0.6);
+ln(Tr(-10,SC,8),Tr(-10,k.pinS,k.pinN),RD,2);
+ln(Tr(-10,k.pinS,k.pinN),Tr(-10,k.b,8),DK,3);
+ln(Tr(-8,k.pinS,k.pinN),Tr(-12,k.pinS,k.pinN),DK,4);
+ln(TT(10,3,8),TT(-10,3,8),RD,3);
+[6,134].forEach(function(x){
+pl([[x,192,102],[x,PY,PZ],[x,PY-145*c,PZ+145*s],[x,PY-145*c,102]],NEU,0.16,NEU,0.4);
+});
+var P4=[TT(10,2,9),TT(130,2,9),TT(130,152,9),TT(10,152,9)];
+pl(P4,NEU,0.2,R,0.5);
+for(var q2=12;q2<152;q2+=10)ln(TT(10,q2,10),TT(130,q2,10),FR,0.25);
+for(var x2=20;x2<130;x2+=10)ln(TT(x2,2,10),TT(x2,152,10),FR,0.25);
+[40,77,115].forEach(function(q3){ln(TT(10,q3,8),TT(130,q3,8),R,3);});
+ln(TT(70,2,8),TT(70,152,8),R,3);
+for(var i2=0;i2<4;i2++)ln(P4[i2],P4[(i2+1)%4],R,4);
+[10,130].forEach(function(x3){pl([TT(x3,2,9),TT(x3,152,9),TT(x3,152,32),TT(x3,2,32)],R,0.2,R,0.7);});
+pl([TT(10,152,9),TT(130,152,9),TT(130,152,32),TT(10,152,32)],R,0.3,R,0.7);
+pl([TT(15,2,9),TT(125,2,9),TT(102.5,-45,-16),TT(37.5,-45,-16)],R,0.5,RD,0.7);
+[[15,37.5],[125,102.5]].forEach(function(w4){pl([TT(w4[0],2,9),TT(w4[1],-45,-16),TT(w4[1],-45,-2),TT(w4[0],2,23)],R,0.3,RD,0.6);ln(TT(w4[0],2,23),TT(w4[1],-45,-2),RD,1.2);});
+ln(TT(37.5,-45,-16),TT(102.5,-45,-16),RD,2.5);
+[8,132].forEach(function(x5){[22,128].forEach(function(q4){wheelT(x5,q4,5,5);ln(TT(x5,q4,5),TT(x5<70?10:130,q4,5),DK,2);});});
+lb(TT(70,76,10),'Sito 150×120 (oko 2 cm)');
+lb(Tr(132,100,0),'Vodiace L profily');
+lb([140,PY,PZ],'Čap (kĺb) rámu');
+lb(Tr(-40,-54,8),'Motor 400 V + prevodovka');
+lb(Tr(-10,SC,17),'Excentrický kotúč');
+lb(Tr(-10,-24,8),'Ojnica (plochá oceľ)');
+lb([70,48,97],'Predná stena lievika');
+lb([120,150,90],'Vozík 130×100×90');
+lb([70,-40,60],'Minitraktor');
+lb([70,32,165],'Zóna hlavy vodiča (odhad)');
+lb(TT(70,-45,-16),'Výsyp sute (65 cm)');
+lb([60,264,58],'Fúrik zboku, korba 80 cm');
+return {I:I,lab:lab,Tr:Tr};
+}
+function size(){
+var w=svg.clientWidth||680;
+W=w;H=Math.round(Math.max(340,Math.min(w*0.8,600)));
+svg.setAttribute('viewBox','0 0 '+W+' '+H);
+svg.setAttribute('height',H);
+}
+var g=document.createElementNS(NS,'g');svg.appendChild(g);
+function render(){
+var sc=scene();
+var yw=st.yaw*Math.PI/180,pt=st.pitch*Math.PI/180;
+var cyw=Math.cos(yw),syw=Math.sin(yw),cp=Math.cos(pt),sp=Math.sin(pt);
+var pr=function(p){var x=p[0]-CX,y=p[1]-CY,z=p[2]-CZ;var xr=x*cyw-y*syw,yr=x*syw+y*cyw;return [xr,-(z*cp+yr*sp),yr*cp-z*sp];};
+var mnx=1e9,mxx=-1e9,mny=1e9,mxy=-1e9;
+sc.I.forEach(function(it){it.q=it.p.map(pr);var dd=0;it.q.forEach(function(v){mnx=Math.min(mnx,v[0]);mxx=Math.max(mxx,v[0]);mny=Math.min(mny,v[1]);mxy=Math.max(mxy,v[1]);dd+=v[2];});it.d=dd/it.q.length;});
+var mg=24,lm=st.lab?Math.min(120,W*0.17):0;
+var scl=Math.min((W-2*mg-lm)/(mxx-mnx),(H-2*mg)/(mxy-mny))*st.zoom;
+var ox=W/2-(mnx+mxx)/2*scl,oy=H/2-(mny+mxy)/2*scl;
+var X=function(v){return (v[0]*scl+ox).toFixed(1);},Y=function(v){return (v[1]*scl+oy).toFixed(1);};
+sc.I.sort(function(a,b){return b.d-a.d;});
+var out='';
+sc.I.forEach(function(it){
+if(it.k==='l'){
+var w=Math.max(1,it.w*scl);
+out+='<line x1="'+X(it.q[0])+'" y1="'+Y(it.q[0])+'" x2="'+X(it.q[1])+'" y2="'+Y(it.q[1])+'" style="stroke:'+it.col+'" stroke-width="'+w.toFixed(1)+'" stroke-linecap="'+(it.cap||'round')+'"'+(it.dash?' stroke-dasharray="'+it.dash+'"':'')+'/>';
+}else{
+out+='<polygon points="'+it.q.map(function(v){return X(v)+','+Y(v);}).join(' ')+'" style="fill:'+it.fill+';stroke:'+it.stroke+'" fill-opacity="'+it.op+'" stroke-width="'+Math.max(0.6,it.sw*scl*0.5).toFixed(1)+'" stroke-linejoin="round"/>';
+}
+});
+if(st.lab){
+sc.lab.forEach(function(l,i){
+var q=pr(l.p);var ax=q[0]*scl+ox,ay=q[1]*scl+oy;
+var dx=ax-W/2,dy=ay-H/2;var m=Math.hypot(dx,dy);if(m<1){dx=1;dy=0;m=1;}
+var dist=30+(i%3)*14;
+var lx=ax+dx/m*dist,ly=ay+dy/m*dist*0.7;
+var w=l.txt.length*6.6;var anc='start';
+if(dx>=0){lx=Math.min(lx,W-8-w);}else{anc='end';lx=Math.max(lx,8+w);}
+ly=Math.max(14,Math.min(H-8,ly));
+out+='<line x1="'+ax.toFixed(1)+'" y1="'+ay.toFixed(1)+'" x2="'+lx.toFixed(1)+'" y2="'+(ly-4).toFixed(1)+'" style="stroke:var(--ink2)" stroke-width="0.6" stroke-dasharray="3 3"/>';
+out+='<circle cx="'+ax.toFixed(1)+'" cy="'+ay.toFixed(1)+'" r="2.2" style="fill:var(--ink)"/>';
+out+='<text x="'+lx.toFixed(1)+'" y="'+ly.toFixed(1)+'" text-anchor="'+anc+'" style="fill:var(--ink);stroke:var(--panel);stroke-width:3px;paint-order:stroke;font:12px var(--f-body)">'+l.txt+'</text>';
+});
+}
+g.innerHTML=out;
+}
+function fmt(n,dec){return n.toFixed(dec).replace('.',',');}
+function upd(){
+var a=st.th*Math.PI/180,c=Math.cos(a),s=Math.sin(a);
+var rpm=1450/st.ratio,om=2*Math.PI*rpm/60,e=st.ecc/1000;
+document.getElementById('thv').textContent=st.th+'°';
+document.getElementById('eccv').textContent=st.ecc+' mm';
+document.getElementById('spdv').textContent=st.spd+' %';
+document.getElementById('s-rpm').textContent=Math.round(rpm);
+document.getElementById('s-st').textContent=st.ecc*2;
+document.getElementById('s-g').textContent=fmt(e*om*om/9.81,2);
+document.getElementById('s-lo').textContent=Math.round(PZ+2*s+9*c);
+document.getElementById('s-hi').textContent=Math.round(PZ+152*s+9*c);
+}
+var last=0,dirty=true;
+function frame(ts){
+var dt=last?Math.min(0.05,(ts-last)/1000):0;last=ts;
+if(st.play){
+var om=2*Math.PI*(1450/st.ratio)/60;
+st.phase+=dt*om*st.spd/100;
+dirty=true;
+}
+if(dirty){render();dirty=false;}
+requestAnimationFrame(frame);
+}
+function sync(){
+var pb=document.getElementById('play');
+pb.textContent=st.play?'Pauza':'Spustiť';
+pb.setAttribute('aria-pressed',st.play?'true':'false');
+}
+document.getElementById('play').addEventListener('click',function(){st.play=!st.play;sync();});
+document.querySelectorAll('#views button[data-v]').forEach(function(b){b.addEventListener('click',function(){var v=b.dataset.v.split(',').map(Number);st.yaw=v[0];st.pitch=v[1];st.zoom=1;dirty=true;});});
+document.getElementById('zp').addEventListener('click',function(){st.zoom=Math.min(3,st.zoom*1.25);dirty=true;});
+document.getElementById('zm').addEventListener('click',function(){st.zoom=Math.max(0.5,st.zoom/1.25);dirty=true;});
+document.getElementById('th').addEventListener('input',function(e){st.th=+e.target.value;upd();dirty=true;});
+document.getElementById('ecc').addEventListener('input',function(e){st.ecc=+e.target.value;upd();dirty=true;});
+document.getElementById('spd').addEventListener('input',function(e){st.spd=+e.target.value;upd();});
+document.getElementById('ratio').addEventListener('change',function(e){st.ratio=+e.target.value;upd();});
+document.getElementById('ex').addEventListener('click',function(e){st.exag=!st.exag;e.target.setAttribute('aria-pressed',st.exag?'true':'false');e.target.textContent=st.exag?'Zväčšený ×1,5':'Skutočný';dirty=true;});
+document.getElementById('lb').addEventListener('click',function(e){st.lab=!st.lab;e.target.setAttribute('aria-pressed',st.lab?'true':'false');e.target.textContent=st.lab?'Zapnuté':'Vypnuté';dirty=true;});
+var drag=null;
+svg.addEventListener('pointerdown',function(e){drag={x:e.clientX,y:e.clientY};svg.setPointerCapture(e.pointerId);svg.style.cursor='grabbing';});
+svg.addEventListener('pointermove',function(e){if(!drag)return;st.yaw+=(e.clientX-drag.x)*0.5;st.pitch=Math.max(0,Math.min(90,st.pitch+(e.clientY-drag.y)*0.4));drag={x:e.clientX,y:e.clientY};dirty=true;});
+svg.addEventListener('pointerup',function(){drag=null;svg.style.cursor='grab';});
+svg.addEventListener('pointercancel',function(){drag=null;svg.style.cursor='grab';});
+svg.addEventListener('wheel',function(e){e.preventDefault();st.zoom=Math.max(0.5,Math.min(3,st.zoom*(e.deltaY<0?1.1:0.9)));dirty=true;},{passive:false});
+window.addEventListener('resize',function(){size();dirty=true;});
+if(W<560&&false){st.lab=false;}
+size();
+if((svg.clientWidth||680)<560){st.lab=false;var lbb=document.getElementById('lb');lbb.setAttribute('aria-pressed','false');lbb.textContent='Vypnuté';}
+sync();upd();
+requestAnimationFrame(frame);
+})();
+</script>
+<script>
+(function(){
+var PARTS=[
+{c:"K",t:"Konštrukcia, nosný rám",n:"Stĺpy, pozdĺžne nosníky a vzpery z L 50×50×5. Pri vjazde vozíka nie je priečnik, rám tam drží obruba lievika.",r:[
+["K1","L profil 50×50×5, vysoké nohy (strana vjazdu)","2 × 2000","Pri nich sú perforované nosníky na nastavenie sklonu."],
+["K2","L profil 50×50×5, nízke nohy (strana výsypu)","2 × 1000","Os čapu koľajníc je vo výške 98 cm a je v konzole V8, nie v nohe. Zvyšok nohy je rezerva na zváranie."],
+["K3a","L profil 50×50×5, pozdĺžne nosníky, spodné","2 × 1440","Kolmý rez, zasúva sa do kúta nôh (medzi vnútornými stranami ramien nôh), spodná hrana vo výške 9,5 cm."],
+["K3b","L profil 50×50×5, pozdĺžne nosníky, horné","2 × 1440","Ako K3a, spodná hrana vo výške 82,5 cm. Vo vodorovnom ramene okno 45 × 85 mm pre vzperu K5b (ĽAVÁ + PRAVÁ, zrkadlové)."],
+["K4","L profil 50×50×5, priečniky pri výsype","2 × 1440","Kolmý rez, zasúva sa do kúta nízkych nôh. Osi vo výške 18 cm a 79 cm (60 mm nad a pod K3). Spodný je zároveň doraz vozíka."],
+["K5","L profil 50×50×5, vzpery","2 × 723, 2 × 552","Dlhšia hrana. Rohové vystuženie, uhly rezu 42° / 48° a 53° / 37°, pozri výkresy."],
+["K9","L profil 50×50×5, kolenové vzpery","4 × 616","Oba rezy 45°, dlhšia hrana. Dve pri vysokej nohe pod K3b, dve pri nízkej nohe nad K3a (po jednej na každý rám). Znižujú kývanie rámu pri chode motora."],
+["K6","Pätková platňa 120×120×8 so 4 otvormi Ø13","4 ks","Pod každú nohu."],
+["K7","Kotva M12×120, rozperná alebo chemická","4 až 8 ks","Do betónu. Bez ukotvenia sa rám pri vibrácii posúva."],
+["K8","L profil 50×50×5, horný priečnik","1 × 1440","Medzi vrcholmi vysokých nôh, vo výške 1950. Stužuje stroj proti bočnému kývaniu a nesie kladkostroj.","odporúčané"]]},
+{c:"L",t:"Lievik",n:"Výška 10 cm. Predná stena (od traktora) takmer zvislá, ostatné približne 45°.",r:[
+["L1","L profil 50×50×5, horný rám lievika","2 × 1160, 2 × 1480","Vonkajší rozmer 116×148 cm vo výške 102 cm, rohy gérung 45°."],
+["L2","L profil 50×50×5, spojky rámu k nohám","4 × 150","Rám lievika zároveň stužuje stĺpy."],
+["L3","Plech 2 mm, 4 steny lievika","cca 0,8 m²","Vrátane preplátovania."],
+["L4","Gumený pás 5 mm × 100 mm","5 m","Visí pod spodnou hranou a tesní proti okraju vozíka."],
+["L5","Plochá oceľ 20×3, prítlačná lišta gumy","2 × 1180, 2 × 860","Po obvode spodnej hrany lievika."],
+["L6","Pogumovaná plachta alebo gumený pás 3 mm","2 × 1700 × 450","Bočné zástery medzi lievikom a koľajnicami."],
+["L7","Skrutky M6×20, matice s vložkou, široké podložky","40 ks","Upevnenie gumy."]]},
+{c:"S",t:"Nosník sita, rám a pletivo",n:"Rám 150×120 cm na 4 kolesách. Pod pletivom sú výstuhy, aby sa na rozpätí 120 cm neprehýbalo.",r:[
+["S1","L profil 50×50×5, obvodový rám","2 × 1500, 2 × 1200","Vonkajší rozmer 150×120 cm, rohy na gérung."],
+["S2","Plochá oceľ 40×5, priečne výstuhy","3 × 1190","Medzi zvislými ramenami dlhých strán rámu, na koncoch hore vyrezaný roh 5 × 45 (zasúva sa pod police). Asi 40, 77 a 115 cm od spodného okraja."],
+["S3","Plochá oceľ 40×5, pozdĺžna výstuha","1 × 1490","V strede, medzi zvislými ramenami krátkych strán rámu, vyrezané rohy ako pri S2."],
+["S4","Pletivo 150×120 cm, drôt 2 mm, oko 2 cm","1 ks, už máš","Napnúť a prichytiť po obvode aj na výstuhy."],
+["S5","Plochá oceľ 20×3, prítlačná lišta pletiva","2 × 1450, 2 × 1100","Alebo bodové zvary po 5 cm."],
+["S6","Plech 2 mm, bočnice a zadná stena výšky 23 cm","2 × 1500, 1 × 1200","Ohyb 15 mm dole pre stuženie."],
+["S7","Plech 2 mm, dno výsypu sute, lichobežník","1 ks, základne 1100 a 650, výška 532","Zužuje sa na 650 mm, aby sa sutina sypala do korby fúrika dlhej asi 800 mm. Skutočný fúrik zmeraj a výsyp o 100 až 150 mm skráť oproti jeho korbe."],
+["S10","Plech 2 mm, bočné steny výsypu","2 × 578 × 155","Stoja kolmo na dne, v pôdoryse šikmo pod 22,9° od osi. Horný lem 15 mm."],
+["S8","L profil 50×50×5, konzola ojnice","1 × 300","Na pravej strane sita (strana motora), otvor Ø13 pre čap M12."],
+["S9","Skrutky M6×20, matice, podložky","40 ks","Prítlačné lišty."]]},
+{c:"V",t:"Vodiace profily a pojazd",n:"Dve koľajnice z L profilu, uchytené čapom pri výsype a zdvíhané pri vjazde. Sito sa po nich kotúľa na 4 kolesách.",r:[
+["V1","L profil 50×50×5, pravá koľajnica (strana motora)","1 × 2150","S predĺžením 700 mm pod motor."],
+["V2","L profil 50×50×5, ľavá koľajnica","1 × 1550","Zrkadlová k pravej: polica s kolesami smeruje dovnútra stroja."],
+["V3","L profil 50×50×5, priečne spoje koľajníc","2 × 1280","Medzi vnútornými stranami zvislých ramien koľajníc, zasunuté pod police. Jeden 6 cm za osou čapu, druhý 120 cm pred osou čapu."],
+["V4","Koleso Ø100 mm s guľôčkovými ložiskami, nosnosť aspoň 150 kg","4 ks","Beží po vodorovnej polici L profilu."],
+["V5","Čap kolesa Ø20 × 60 so zaisťovacím krúžkom","4 ks",""],
+["V6","Bočná vodiaca kladka Ø40 až 50 mm s ložiskom","4 ks","V modeli nie je, bráni bočnému posunu sita."],
+["V7","Čap kĺbu Ø20 × 140 so splintom","2 ks","Spojenie koľajnice s nízkou nohou."],
+["V8","L profil 50×50×5, konzola čapu","2 × 150","Privarí sa k vnútornej strane nízkej nohy, otvor Ø21 pre čap je 110 mm od osi nohy smerom k vysokému koncu vo výške 980."]]},
+{c:"N",t:"Nastavenie sklonu",n:"Kolíkové podopretie. Pri každej vysokej nohe sú dva perforované nosníky a koľajnica medzi nimi leží na spodnom kolíku. Horný kolík ju drží proti nadskočeniu pri vibrácii. Sklon meníš prekladaním kolíkov.",r:[
+["N1","Plochá oceľ 50×8, perforovaný nosník","4 × 700","Dva na každú vysokú nohu (A zvonku, B zvnútra koľajnice), otvory Ø17 po 33 mm, 20 otvorov. Odporúčam výpal alebo vŕtanie podľa jednej šablóny."],
+["N2","Plochá oceľ 50×8, mostík nosníkov","2 × 100","Vodorovne pod spodnými koncami nosníkov A a B jednej nohy, spája ich."],
+["N3","Kolík Ø16 × 120 so zaisťovacím R-klipom","4 ks + 2 rezervné","Dva kolíky na stranu: spodný nesie, horný zaisťuje. Z kruhovej ocele Ø16, v rade otvor Ø3 pre klip."],
+["N4","Lanový navijak alebo kladkostroj 500 kg","1 ks","Na zdvíhanie koľajníc, rukou je to náročné. Pri preklade kolíkov musí byť sito zaťažené navijakom, nie rukou.","voliteľné"]]},
+{c:"M",t:"Upevnenie motora",n:"Motor je na výstuži priamo na pravej koľajnici (pri pohľade od výsypu). Pri zmene sklonu sa teda naklápa s ňou a ojnica zostáva rovnobežná so sklonom.",r:[
+["M1","L profil 50×50×5, ramená výstuže","2 × 650","Privarené k pravej koľajnici a vyčnievajú za koleso."],
+["M2","L profil 50×50×5, priečka","1 × 180",""],
+["M3","Plech 8 mm, doska pod motor 300×200","1 ks","Otvory podľa prevodovky, oválne otvory na vyrovnanie."],
+["M4","Skrutky M10×40, matice s vložkou, podložky","4 sady","Doska k motoru."],
+["M5","Plech 1,5 mm, kryt excentra a ojnice","cca 300×300","Ochrana pred zachytením, dôležitá."]]},
+{c:"P",t:"Pohon",n:"Motor 400 V, 1450 ot/min, šneková prevodovka, excentrický kotúč a ojnica. Prevod 7,5 dá okolo 190 ot/min.",r:[
+["P1","Trojfázový motor 400 V, 0,75 kW, 4-pólový","1 ks","Veľkosť 80, B14 alebo B3 podľa prevodovky."],
+["P2","Šneková prevodovka NMRV 063 alebo ekvivalent, i = 7,5","1 ks","Overiť prírubu motora a výstupný hriadeľ (Ø25) pri objednávke."],
+["P3","Excentrický kotúč Ø120 × 20, otvor Ø25 s drážkou","1 ks, sústruh","Radiálna drážka 13 mm pre čap M12, stred čapu od polomeru 25 do 35 mm."],
+["P4","Pero 8×7×40 + čelná podložka M8","1 sada",""],
+["P5","Excentrický čap: skrutka M12×60 (8.8) + veľká podložka + matica s vložkou","1 ks","Vedie sa v drážke kotúča."],
+["P6","Ojnica, plochá oceľ 40×8","1 × 610","Otvory Ø16 na koncoch, 570 mm medzi osami."],
+["P7","Puzdro Ø12/16 × 20, bronz alebo PA","4 ks","Do otvorov ojnice."],
+["P8","Skrutka M12×70 + matica s vložkou","1 ks","Ojnica ku konzole sita (S8)."],
+["P9","Frekvenčný menič 0,75 kW, vstup 3×400 V","1 ks","Ladenie otáčok.","voliteľné"]]},
+{c:"E",t:"Elektrika",n:"Zapojenie a revíziu nechaj urobiť elektrikárovi s oprávnením.",r:[
+["E1","Motorový istič 1,6 až 2,5 A","1 ks","Motor 0,75 kW pri 400 V ťahá okolo 1,8 A (odhad)."],
+["E2","Tlačidlá START a STOP s hubovým STOP","1 sada",""],
+["E3","Kábel 4×1,5 mm² H07RN-F","8 m","Pohyblivý úsek k motoru drž mimo ojnice."],
+["E4","Vidlica CEE 16 A, 5-pólová","1 ks","Podľa tvojej zásuvky."],
+["E5","Rozvodná skrinka IP65 s vývodkami","1 ks",""]]},
+{c:"Z",t:"Spojovací a spotrebný materiál",n:"Odhad, doplníš podľa potreby.",r:[
+["Z1","Základná farba na kov a email","po 3 až 4 l","Plocha cca 13 m² na dve vrstvy."],
+["Z2","Zváracie elektródy rutilové Ø2,5","3 kg","Odhad podľa dĺžky zvarov."],
+["Z3","Rezné kotúče Ø125×1 / brúsne Ø125×6 / lamelové","10 / 3 / 5 ks",""],
+["Z4","Plastické mazivo na ložiská","1 kartuša",""],
+["Z5","Skrutky a matice M8 až M12 na doplnenie","cca 40 ks","Rezerva pri montáži."]]}
+];
+var SUM=[
+["L profil 50×50×5 (všetky L profily)","40,8 m","8 tyčí po 6 m (10 % rezerva)","≈ 154 kg"],
+["Plochá oceľ 40×5","5,1 m","1 tyč 6 m","≈ 7 kg"],
+["Plochá oceľ 50×8","3,0 m","1 kus 3,5 m","≈ 10 kg"],
+["Plochá oceľ 40×8 (ojnica)","0,61 m","1 kus 1 m","≈ 2 kg"],
+["Plochá oceľ 20×3","9,2 m","2 tyče po 6 m","≈ 4 kg"],
+["Plech 2 mm","cca 2,6 m²","1 tabuľa 1250×2500","≈ 37 kg"],
+["Plech 8 mm","cca 0,12 m²","výpal alebo odrezky","≈ 8 kg"],
+["Kruhová oceľ Ø16 (kolíky), Ø20 (čapy) a odrezok Ø120×20","0,5 m + 0,3 m + 1 ks","","≈ 4 kg"],
+["Gumený pás 5 mm × 100 mm","5 m","",""],
+["Pogumovaná plachta alebo guma 3 mm","cca 1,5 m²","",""],
+["Motor 0,75 kW + prevodovka NMRV 063","1 + 1 ks","","≈ 20 kg"],
+["Koleso Ø100 s ložiskami","4 ks","","≈ 4 kg"]
+];
+function el(t,cls,txt){var e=document.createElement(t);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
+var host=document.getElementById('parts');
+PARTS.forEach(function(p){
+var d=el('details','part');d.open=true;
+var s=el('summary');s.appendChild(el('span','pc',p.c));s.appendChild(el('span','pt',p.t));d.appendChild(s);
+d.appendChild(el('p','pn',p.n));
+var w=el('div','tw');var tb=el('table','tbl');
+var th=el('thead');var hr=el('tr');['Poz.','Položka','Množstvo','Poznámka'].forEach(function(h){hr.appendChild(el('th',null,h));});th.appendChild(hr);tb.appendChild(th);
+var bd=el('tbody');
+p.r.forEach(function(r){
+var tr=el('tr');
+tr.appendChild(el('td','id',r[0]));
+var ti=el('td',null,r[1]);if(r[4]){ti.appendChild(el('span','tag',r[4]));}
+tr.appendChild(ti);
+tr.appendChild(el('td','q',r[2]));
+tr.appendChild(el('td','n',r[3]));
+bd.appendChild(tr);
+});
+tb.appendChild(bd);w.appendChild(tb);d.appendChild(w);host.appendChild(d);
+});
+var sb=document.getElementById('sumbox');
+sb.appendChild(el('h3',null,'Nákupný súhrn'));
+var w2=el('div','tw');var t2=el('table','tbl');
+var h2=el('thead');var hr2=el('tr');['Materiál','Množstvo z modelu','Nákup','Hmotnosť'].forEach(function(h){hr2.appendChild(el('th',null,h));});h2.appendChild(hr2);t2.appendChild(h2);
+var b2=el('tbody');
+SUM.forEach(function(r){var tr=el('tr');tr.appendChild(el('td','m',r[0]));tr.appendChild(el('td','q',r[1]));tr.appendChild(el('td','n',r[2]));tr.appendChild(el('td','q',r[3]));b2.appendChild(tr);});
+t2.appendChild(b2);w2.appendChild(t2);sb.appendChild(w2);
+sb.appendChild(el('p','foot','Oceľ spolu približne 220 kg, celý stroj s motorom a kolesami približne 250 kg. Ide o odhad z rozmerov modelu, nie o vážený údaj.'));
+var cb=el('button','copy','Kopírovať súhrn');cb.type='button';
+cb.addEventListener('click',function(){
+var tx=SUM.map(function(r){return r.filter(Boolean).join(' | ');}).join('\n');
+var done=function(){cb.textContent='Skopírované';setTimeout(function(){cb.textContent='Kopírovať súhrn';},1800);};
+try{navigator.clipboard.writeText(tx).then(done,function(){cb.textContent='Označ a skopíruj ručne';});}catch(e){cb.textContent='Označ a skopíruj ručne';}
+});
+sb.appendChild(cb);
+})();
+</script>
+<script>
+(function(){
+var R=Math.PI/180;
+function F(n){return String(Math.round(n*10)/10).replace('.',',');}
+function T(x,y,s,o){o=o||{};return '<text class="dt'+(o.c?' '+o.c:'')+'" x="'+x+'" y="'+y+'" text-anchor="'+(o.a||'middle')+'"'+(o.r?' transform="rotate('+o.r+' '+x+' '+y+')"':'')+'>'+s+'</text>';}
+function Ln(x1,y1,x2,y2,c){return '<line class="'+c+'" x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'"/>';}
+function tick(x,y){return Ln(x-4,y+4,x+4,y-4,'dm');}
+function dH(x1,x2,y,lab,ey,o){o=o||{};
+ return Ln(x1,ey,x1,y+(y<ey?-4:4),'ex')+Ln(x2,ey,x2,y+(y<ey?-4:4),'ex')+Ln(x1,y,x2,y,'dm')+tick(x1,y)+tick(x2,y)+T((x1+x2)/2,y-4,lab,{c:'dx'});}
+function dV(y1,y2,x,lab,ex,o){
+ return Ln(ex,y1,x+(x<ex?-4:4),y1,'ex')+Ln(ex,y2,x+(x<ex?-4:4),y2,'ex')+Ln(x,y1,x,y2,'dm')+tick(x,y1)+tick(x,y2)+T(x-5,(y1+y2)/2+4,lab,{c:'dx',a:'end'});}
+function svg(w,h,body,lab){return '<svg viewBox="0 0 '+w+' '+h+'" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="'+lab+'">'+body+'</svg>';}
+function fig(c1,c2,s,wide){var f=document.createElement('figure');f.className='fg';f.innerHTML='<figcaption><span class="c1">'+c1+'</span><span class="c2">'+c2+'</span></figcaption><div class="sw'+(wide?' wide':'')+'">'+s+'</div>';return f;}
+function cot(a){return Math.abs(a-90)<1e-9?0:1/Math.tan(a*R);}
+
+/* ---------- pruty ---------- */
+function bar(b){
+ var L=b.L,w=b.w,a1=b.a1,a2=b.a2;
+ var Lp=L<400?300:560,wp=36,x0=70,yt=56,yb=yt+wp;
+ var c1=wp*cot(a1),c2=wp*cot(a2);
+ var short=L-w*(cot(a1)+cot(a2));
+ var o='';
+ o+='<polygon class="sh" points="'+x0+','+yt+' '+(x0+Lp)+','+yt+' '+(x0+Lp-c2)+','+yb+' '+(x0+c1)+','+yb+'"/>';
+ o+=Ln(x0-12,(yt+yb)/2,x0+Lp+12,(yt+yb)/2,'cl');
+ o+=dH(x0,x0+Lp,22,F(L),yt);
+ var yy=yb+22;
+ if(a1!==90||a2!==90){
+  var v1=w*cot(a1),v2=w*cot(a2);
+  if(c1>0.5)o+=dH(x0,x0+c1,yy,F(v1),yb);
+  o+=dH(x0+c1,x0+Lp-c2,yy,F(short),yb);
+  if(c2>0.5)o+=dH(x0+Lp-c2,x0+Lp,yy,F(v2),yb);
+  yy+=24;}
+ o+=T(x0-6,yt-6,F(a1)+'°',{a:'end'})+T(x0+Lp+6,yt-6,F(a2)+'°',{a:'start'});
+ var mid=(yt+yb)/2;
+ (b.holes||[]).forEach(function(h){var px=x0+h[0]/L*Lp;
+  o+='<circle class="ol" cx="'+px+'" cy="'+mid+'" r="'+Math.max(3,Math.min(8,h[1]*.35))+'"/>';
+  o+=dH(x0,px,yy,F(h[0]),mid+10);
+  o+=T(px,yb+14,'Ø'+h[1]+(h[2]?' '+h[2]:''),{c:'dx'});yy+=0;});
+ if(b.holes&&b.holes.length>1){yy+=0;}
+ if(b.pitch){var n=b.pitch[2];for(var i=0;i<n;i++){var px=x0+(b.pitch[0]+i*b.pitch[1])/L*Lp;o+='<circle class="ol" cx="'+px+'" cy="'+mid+'" r="3"/>';}
+  o+=dH(x0+b.pitch[0]/L*Lp,x0+(b.pitch[0]+b.pitch[1])/L*Lp,yy,F(b.pitch[1]),mid+8);
+  o+=T(x0+Lp/2,yb+14,n+' × Ø'+b.pitch[3]+', rozstup '+b.pitch[1]+', prvý '+b.pitch[0]+' od konca',{c:'dx'});yy+=24;}
+ if(b.slot){var s1=x0+b.slot[0]/L*Lp,s2=x0+b.slot[1]/L*Lp;
+  o+='<rect class="ol" x="'+s1+'" y="'+(mid-6)+'" width="'+(s2-s1)+'" height="12" rx="6"/>';
+  o+=dH(x0,s1,yy,F(b.slot[0]),mid+8);yy+=24;o+=dH(x0,s2,yy,F(b.slot[1]),mid+8);
+  o+=T((s1+s2)/2,yb+14,'drážka šírky '+b.slot[2]+' (dĺžka '+(b.slot[1]-b.slot[0]+b.slot[2])+' vrátane zaoblení)',{c:'dx'});yy+=24;}
+ (b.marks||[]).forEach(function(m){var px=x0+m[0]/L*Lp;
+  o+=Ln(px,yt-2,px,yb+2,'hid');
+  o+=dH(x0,px,yy,F(m[0]),yb+2);o+=T(px,yy+16,m[1],{c:'dx'});yy+=34;});
+ if(b.win){var w1=x0+b.win[0]/L*Lp,w2=x0+(b.win[0]+b.win[1])/L*Lp;
+  o+='<rect class="hid" x="'+w1+'" y="'+(yt+5)+'" width="'+(w2-w1)+'" height="'+(wp-5)+'"/>';
+  o+=dH(x0,w1,yy,F(b.win[0]),yb+2);yy+=24;o+=dH(w1,w2,yy,F(b.win[1]),yb+2);
+  o+=T((w1+w2)/2,yy+16,b.win[2],{c:'dx'});yy+=34;}
+ if(b.notch){var nw=b.notch[1]/L*Lp,nh=Math.max(5,b.notch[0]*0.8);
+  o+='<rect class="hid" x="'+x0+'" y="'+yt+'" width="'+nw+'" height="'+nh+'"/><rect class="hid" x="'+(x0+Lp-nw)+'" y="'+yt+'" width="'+nw+'" height="'+nh+'"/>';
+  o+=dH(x0,x0+nw,yy,F(b.notch[1]),yt);o+=T(x0+Lp/2,yy+16,'vyrezaný roh '+b.notch[0]+' × '+b.notch[1]+' na oboch koncoch (hore)',{c:'dx'});yy+=34;}
+ var H=yy+14;
+ return fig('<b>'+b.id+'</b> '+b.name+' · '+b.prof+' · '+b.qty+(b.lr?' <span class="tag">'+b.lr+'</span>':''),
+  'Rez '+F(a1)+'° / '+F(a2)+'°'+(short<L-0.05?', dlhšia hrana '+F(L)+', kratšia '+F(short)+', vysunutie '+F(w*cot(a1))+' / '+F(w*cot(a2))+' mm. Pílu nastav na '+F(90-a1)+'° / '+F(90-a2)+'° od kolmého rezu.':', dĺžka '+F(L)+'.')+' '+(b.note||''),
+  svg(700,H,o,b.id+' '+b.name),0);
+}
+var BARS=[
+{id:'K1',name:'Vysoká noha',prof:'L 50×50×5',L:2000,w:50,a1:90,a2:90,qty:'2 ks',note:'Osadiť na pätku K6. L profil otoč tak, aby vonkajší roh smeroval von z rohu stroja a kút dovnútra. K nohe sa privarujú perforované nosníky N1 s dištančnými kúskami N2, od výšky 1100 po 1800 od zeme.'},
+{id:'K2',lr:'ĽAVÁ + PRAVÁ',name:'Nízka noha',prof:'L 50×50×5',L:1000,w:50,a1:90,a2:90,qty:'2 ks',note:'Vonkajší roh profilu smeruje von z rohu stroja, kút dovnútra. Čap koľajnice nie je v nohe, je v konzole V8 (výška osi 980). Noha je dlhšia o 20 mm ako os, zvyšok je rezerva na zváranie. Nohu nechaj dlhšiu, zvyšok odrež po osadení.'},
+{id:'K3a',name:'Pozdĺžne nosníky, spodné',prof:'L 50×50×5',L:1440,w:50,a1:90,a2:90,qty:'2 ks',note:'Rez kolmý. Zasúva sa do kúta nôh: zvislé rameno naľahne na rameno nohy rovnobežné s K3 (zvar po hrane), čelo dosadne na druhé rameno nohy (zvar po čele). 1440 je vzdialenosť medzi vnútornými stranami ramien nôh. Spodná hrana vo výške 95, vodorovné rameno smeruje dovnútra.'},
+{id:'K3b',lr:'ĽAVÁ + PRAVÁ',name:'Pozdĺžne nosníky, horné (s oknom pre K5b)',prof:'L 50×50×5',L:1440,w:50,a1:90,a2:90,qty:'2 ks',win:[348,85,'okno vo vodorovnom ramene 45 × 85 (vyrež od zvislého ramena, 5 mm ostáva)'],note:'Ako K3a, spodná hrana vo výške 825. Pohľad zhora na vodorovné rameno, ľavý koniec je pri nízkej nohe. Okno je pre vzperu K5b, jeho polohu spresni priložením vzpery. Ľavý a pravý nosník sú zrkadlové (vodorovné rameno smeruje dovnútra).'},
+{id:'K8',name:'Horný priečnik (odporúčaný)',prof:'L 50×50×5',L:1440,w:50,a1:90,a2:90,qty:'1 ks',note:'Rez kolmý, uloženie do kúta vysokých nôh (zvislé rameno na zvislé rameno nohy, čelo na druhé rameno), os 1950. Medzi vrcholmi vysokých nôh, stužuje stroj proti bočnému kývaniu (zmenšuje bočný pohyb vrcholu asi o tretinu) a nesie kladkostroj.'},
+{id:'K4',name:'Priečniky pri výsype',prof:'L 50×50×5',L:1440,w:50,a1:90,a2:90,qty:'2 ks',note:'Rez kolmý, uloženie do kúta nízkych nôh ako K3. Spodné hrany vo výške 155 a 765 (osi 180 a 790), teda 10 mm medzera od K3. Spodné rameno smeruje k vysokému koncu.'},
+{id:'K5a',lr:'ĽAVÁ + PRAVÁ',name:'Vzpera, vysoká',prof:'L 50×50×5',L:723,w:50,a1:42,a2:48,qty:'2 ks',note:'Medzi nohou a nosníkom, orientačné, over priložením.'},
+{id:'K5b',lr:'ĽAVÁ + PRAVÁ',name:'Vzpera, nízka',prof:'L 50×50×5',L:552,w:50,a1:53.1,a2:36.9,qty:'2 ks',note:'Medzi nohou a nosníkom, orientačné, over priložením.'},
+{id:'K9',name:'Kolenová vzpera (pri K1 pod K3b, pri K2 nad K3a)',prof:'L 50×50×5',L:616,w:50,a1:45,a2:45,qty:'4 ks',note:'Dlhšia hrana, oba rezy 45°. Uhol 45° medzi nohou a nosníkom, vzdialenosť 400 mm od osi nohy aj od osi nosníka. Dve vzpery (po jednej na každý rám) idú od vysokej nohy K1 v osi 450 šikmo hore ku K3b v 400 mm od nohy, druhé dve od nízkej nohy K2 v osi 520 šikmo dole ku K3a v 400 mm od nohy. Spodná vzpera pri K1 visí pod vodorovným ramenom K3b, horná pri K2 stojí na vodorovnom ramene K3a. Orientačné, over priložením.'},
+{id:'L1a',name:'Rám lievika, krátka strana',prof:'L 50×50×5',L:1160,w:50,a1:45,a2:45,qty:'2 ks',note:'Gérung 45°, dlhšia hrana je vonkajší rozmer rámu.'},
+{id:'L1b',name:'Rám lievika, dlhá strana',prof:'L 50×50×5',L:1480,w:50,a1:45,a2:45,qty:'2 ks',note:'Gérung 45°.'},
+{id:'L2',name:'Spojka rámu k nohe',prof:'L 50×50×5',L:150,w:50,a1:90,a2:90,qty:'4 ks'},
+{id:'L5a',name:'Prítlačná lišta, dlhá',prof:'plochá 20×3',L:1180,w:20,a1:90,a2:90,qty:'2 ks',note:'Otvory Ø6,5 po cca 200 podľa gumy L4.'},
+{id:'L5b',name:'Prítlačná lišta, krátka',prof:'plochá 20×3',L:860,w:20,a1:90,a2:90,qty:'2 ks'},
+{id:'S1a',name:'Rám sita, dlhá strana',prof:'L 50×50×5',L:1500,w:50,a1:45,a2:45,qty:'2 ks',note:'Gérung 45°, vonkajší rozmer 1500.'},
+{id:'S1b',name:'Rám sita, krátka strana',prof:'L 50×50×5',L:1200,w:50,a1:45,a2:45,qty:'2 ks',note:'Gérung 45°, vonkajší rozmer 1200.'},
+{id:'S2',name:'Priečna výstuha sita',prof:'plochá 40×5',L:1190,w:40,a1:90,a2:90,qty:'3 ks',notch:[5,45],note:'Polohy 40, 77 a 115 cm od spodného okraja. Na obe strany horu vyrež roh 5 × 45, aby výstuha prešla pod policu a hornou hranou lícovala s policou.'},
+{id:'S3',name:'Pozdĺžna výstuha sita',prof:'plochá 40×5',L:1490,w:40,a1:90,a2:90,qty:'1 ks',notch:[5,45],note:'Rovnaké vyrezané rohy ako S2. Pri križovaní S2 a S3 spoj po stranách.'},
+{id:'S5a',name:'Prítlačná lišta, dlhá',prof:'plochá 20×3',L:1450,w:20,a1:90,a2:90,qty:'2 ks'},
+{id:'S5b',name:'Prítlačná lišta, krátka',prof:'plochá 20×3',L:1100,w:20,a1:90,a2:90,qty:'2 ks'},
+{id:'S8',lr:'PRAVÁ (strana motora)',name:'Konzola ojnice',prof:'L 50×50×5',L:300,w:50,a1:90,a2:90,qty:'1 ks',holes:[[40,13,'čap M12 (P8)']]},
+{id:'V1',lr:'PRAVÁ (strana motora)',name:'Pravá koľajnica s motorom',prof:'L 50×50×5',L:2150,w:50,a1:90,a2:90,qty:'1 ks',holes:[[700,21,'čap V7']],note:'Dolné predĺženie 700 mm nesie motor (konzoly M1). Polica s kolesami (vodorovné rameno) smeruje dovnútra stroja, preto sú V1 a V2 zrkadlové.'},
+{id:'V2',lr:'ĽAVÁ',name:'Ľavá koľajnica',prof:'L 50×50×5',L:1550,w:50,a1:90,a2:90,qty:'1 ks',holes:[[100,21,'čap V7']],note:'Polica s kolesami smeruje dovnútra stroja, V2 je zrkadlová k V1.'},
+{id:'V3',name:'Priečny spoj koľajníc',prof:'L 50×50×5',L:1280,w:50,a1:90,a2:90,qty:'2 ks',note:'Rez kolmý, 1280 je vzdialenosť medzi vnútornými stranami zvislých ramien koľajníc. Zasunutý pod police: vodorovné rameno naľahne zospodu na police (45 mm na každom konci, zvar po obvode), čelo dosadne na zvislé ramená. Polohy: 60 mm za osou čapu (k motoru) a 1200 pred osou čapu.'},
+{id:'V8',lr:'ĽAVÁ + PRAVÁ',name:'Konzola čapu',prof:'L 50×50×5',L:150,w:50,a1:90,a2:90,qty:'2 ks',holes:[[110,21,'čap V7']],note:'Privarí sa k nízkej nohe, otvor Ø21 je 110 od osi nohy.'},
+{id:'M1',lr:'PRAVÁ (strana motora)',name:'Rameno výstuže motora',prof:'L 50×50×5',L:650,w:50,a1:90,a2:90,qty:'2 ks'},
+{id:'M2',lr:'PRAVÁ (strana motora)',name:'Priečka výstuže motora',prof:'L 50×50×5',L:180,w:50,a1:90,a2:90,qty:'1 ks'},
+{id:'N1',lr:'2× ĽAVÁ + 2× PRAVÁ',name:'Perforovaný nosník A a B',prof:'plochá 50×8',L:700,w:50,a1:90,a2:90,qty:'4 ks',pitch:[30,33,20,17],note:'Otvory Ø17 po 33 mm, vŕtať všetky štyri nosníky podľa jednej šablóny. Dolný koniec 1100 od zeme.'},
+{id:'N2',name:'Mostík nosníkov',prof:'plochá 50×8',L:100,w:50,a1:90,a2:90,qty:'2 ks',note:'Leží vodorovne pod spodnými koncami nosníkov A a B a spája ich. Jeden na každú vysokú nohu.'},
+{id:'N3',name:'Kolík',prof:'kruhová oceľ Ø16',L:120,w:16,a1:90,a2:90,qty:'4 ks + 2 rezervné',holes:[[12,3,'R-klip']],note:'Hrany na konci zrazi 1×45°.'},
+{id:'P6',name:'Ojnica',prof:'plochá 40×8',L:610,w:40,a1:90,a2:90,qty:'1 ks',holes:[[20,16,'M12 + puzdro'],[590,16,'M12 + puzdro']],note:'570 medzi osami otvorov.'}
+];
+
+/* ---------- plechy ---------- */
+function poly(p){
+ var xs=p.pts.map(function(q){return q[0];}),ys=p.pts.map(function(q){return q[1];});
+ var bw=Math.max.apply(null,xs),bh=Math.max.apply(null,ys);
+ var s=Math.min(520/bw,230/bh),x0=90,y0=52;
+ function X(v){return x0+v*s;}function Y(v){return y0+v*s;}
+ var o='<polygon class="sh" points="'+p.pts.map(function(q){return X(q[0])+','+Y(q[1])}).join(' ')+'"/>';
+ (p.folds||[]).forEach(function(f){o+='<line class="fo" x1="'+X(f[0])+'" y1="'+Y(f[1])+'" x2="'+X(f[2])+'" y2="'+Y(f[3])+'"/>';});
+ (p.holes||[]).forEach(function(h){
+  if(h[3]){o+='<rect class="ol" x="'+(X(h[0])-h[3]*s/2)+'" y="'+(Y(h[1])-h[2]*s/2)+'" width="'+(h[3]*s)+'" height="'+(h[2]*s)+'" rx="'+(h[2]*s/2)+'"/>';}
+  else o+='<circle class="ol" cx="'+X(h[0])+'" cy="'+Y(h[1])+'" r="'+Math.max(2.5,h[2]*s/2)+'"/>';});
+ var pts=p.pts,n=pts.length,top=null,bot=null;
+ // horizontal edges
+ for(var i=0;i<n;i++){var a=pts[i],b=pts[(i+1)%n];if(a[1]===b[1]){var len=Math.abs(b[0]-a[0]);
+   if(a[1]===0&&!top){top=1;o+=dH(X(Math.min(a[0],b[0])),X(Math.max(a[0],b[0])),22,F(len),Y(0));}
+   else if(a[1]===bh&&!bot&&!(top&&Math.abs(len-Math.abs(pts[1][0]-pts[0][0]))<1e-6)){bot=1;o+=dH(X(Math.min(a[0],b[0])),X(Math.max(a[0],b[0])),Y(bh)+22,F(len),Y(bh));}}}
+ o+=dV(Y(0),Y(bh),56,F(bh),X(0));
+ var yy=Y(bh)+44;
+ (p.dims||[]).forEach(function(d){o+=T(x0,yy,d,{a:'start',c:'dx'});yy+=16;});
+ if(p.angles){o+=T(x0,yy,p.angles,{a:'start'});yy+=16;}
+ return fig('<b>'+p.id+'</b> '+p.name+' · '+p.prof+' · '+p.qty+(p.lr?' <span class="tag">'+p.lr+'</span>':''),p.note||'',svg(700,yy+8,o,p.id+' '+p.name),0);
+}
+// lievik: bočná stena (lichobežník) – sklon steny 45°, výška 100
+var ang=Math.atan2(Math.sqrt(2)*100,100)/R;
+var PLATES=[
+{id:'K6',name:'Pätková platňa',prof:'plech 8 mm',qty:'4 ks',pts:[[0,0],[120,0],[120,120],[0,120]],holes:[[20,20,13],[100,20,13],[20,100,13],[100,100,13]],dims:['4 otvory Ø13, 20 od hrán','Noha L 50×50 sa privarí do stredu, obvodovo.'],note:'Pod každú nohu, kotvenie M12.'},
+{id:'M3',name:'Doska pod motor',prof:'plech 8 mm',qty:'1 ks',pts:[[0,0],[300,0],[300,200],[0,200]],holes:[[40,40,11,18],[260,40,11,18],[40,160,11,18],[260,160,11,18]],dims:['4 oválne otvory 11×18 (M10), 40 od hrán','Rozteč otvorov dopasuj podľa príruby prevodovky.'],note:'Otvory a rozmery over podľa konkrétneho motora.'},
+{id:'L3a',lr:'ĽAVÁ + PRAVÁ',name:'Lievik, bočná stena (orientačný rozvin)',prof:'plech 2 mm',qty:'2 ks',pts:[[100,0],[1280,0],[1380,141],[0,141]],folds:[[0,141,1380,141]],dims:['Dlhšia hrana (dole) je horný okraj lievika, kratšia je spodný okraj','Šikmá výška 141 (výška lievika 100, odklon 45°), vysunutie 100 na každej strane','Hrany prekryť 15 mm, zvárať bodovo.'],angles:'Uhly pri dlhšej hrane '+F(ang)+'° / '+F(ang)+'°, pri kratšej '+F(180-ang)+'°.',note:'Hornú hranu pripevniť k rámu L1.'},
+{id:'L3b',name:'Lievik, zadná stena (orientačný rozvin)',prof:'plech 2 mm',qty:'1 ks',pts:[[100,0],[960,0],[1060,141],[0,141]],dims:['Dlhšia hrana (dole) 1060 je horný okraj, kratšia 860 spodný','Šikmá výška 141, vysunutie 100 na každej strane'],angles:'Uhly pri dlhšej hrane '+F(ang)+'° / '+F(ang)+'°.',note:'Strana pri výsype sita.'},
+{id:'L3c',name:'Lievik, predná stena (takmer zvislá)',prof:'plech 2 mm',qty:'1 ks',pts:[[0,0],[1060,0],[1060,150],[0,150]],dims:['Výška 150, sklon cca 80° od vodorovnej'],note:'Strana pri traktore. Rozmer spresni šablónou z kartónu na mieste.'},
+{id:'S6a',lr:'ĽAVÁ + PRAVÁ',name:'Bočnica sita',prof:'plech 2 mm',qty:'2 ks',pts:[[0,0],[1500,0],[1500,245],[0,245]],folds:[[0,230,1500,230]],dims:['Výška 230 + ohyb 15 dole (spolu 245)'],note:'Ohyb 90° dovnútra pre stuženie.'},
+{id:'S6b',name:'Zadná stena sita',prof:'plech 2 mm',qty:'1 ks',pts:[[0,0],[1200,0],[1200,245],[0,245]],folds:[[0,230,1200,230]],dims:['Výška 230 + ohyb 15 dole (spolu 245)']},
+{id:'S7',name:'Výsyp sute, dno',prof:'plech 2 mm',qty:'1 ks',pts:[[225,0],[875,0],[1100,532],[0,532]],dims:['Dlhšia hrana (dole) 1100 je pri site, kratšia 650 je výsyp do fúrika','Výška 532, šikmá hrana 578, vysunutie 225 na každej strane','Dno je strmšie než sito: ohyb 28° na hrane pri site'],angles:'Uhly pri dlhšej hrane 67,1° / 67,1°, pri kratšej 112,9°.',note:'Priveď k spodnému priečnemu profilu rámu sita. Šírka 650 je o 150 kratšia než korba fúrika 800.'},
+{id:'S10',lr:'ĽAVÁ + PRAVÁ, zrkadlovo',name:'Výsyp sute, bočná stena',prof:'plech 2 mm',qty:'2 ks',pts:[[0,0],[578,0],[578,155],[0,155]],folds:[[0,140,578,140]],dims:['Výška 140 + lem 15, ohyb lemu 90° dovnútra','Stena sa privarí kolmo na dno pozdĺž šikmej hrany 578','V pôdoryse zviera 22,9° s osou výsypu (tan = 225 / 532)'],note:'Obe steny sa zbiehajú k výsypu. Lem sa ohýba dovnútra, preto sú steny zrkadlové: ľavú a pravú ohni na opačné strany.'},
+{id:'L6',name:'Bočná zástera',prof:'guma 3 mm',qty:'2 ks',pts:[[0,0],[1700,0],[1700,450],[0,450]],note:'Medzi lievikom a koľajnicami, z gumy alebo plachty.'},
+{id:'M5',name:'Kryt excentra a ojnice',prof:'plech 1,5 mm',qty:'1 ks',pts:[[0,0],[300,0],[300,300],[0,300]],dims:['Orientačné, tvar prispôsob okoliu motora','Ohyb hrán 15 mm pre stuženie.']}
+];
+
+/* ---------- excentrický kotúč ---------- */
+function disc(){
+ var s=2.2,cx=250,cy=190,r=60*s,o='';
+ o+='<circle class="sh" cx="'+cx+'" cy="'+cy+'" r="'+r+'"/>';
+ o+=Ln(cx-r-14,cy,cx+r+14,cy,'cl')+Ln(cx,cy-r-14,cx,cy+r+14,'cl');
+ o+='<circle class="ol" cx="'+cx+'" cy="'+cy+'" r="'+(12.5*s)+'"/>';
+ o+='<rect class="ol" x="'+(cx-4*s)+'" y="'+(cy+12.5*s-1)+'" width="'+(8*s)+'" height="'+(3.3*s+1)+'"/>';
+ var y1=cy-35*s,y2=cy-25*s;
+ o+='<rect class="ol" x="'+(cx-6.5*s)+'" y="'+(y1-6.5*s)+'" width="'+(13*s)+'" height="'+((y2-y1)+13*s)+'" rx="'+(6.5*s)+'"/>';
+ o+=dH(cx-r,cx+r,cy-r-32,'Ø120',cy-r);
+ o+=dV(cy-12.5*s,cy+12.5*s,cx-r-26,'Ø25',cx-12.5*s);
+ o+=dV(y1,cy,cx+r+30,'r 35',cx+6.5*s);
+ o+=dV(y2,cy,cx+r+68,'r 25',cx+6.5*s);
+ o+=T(cx+r+80,cy-45,'Drážka šírky 13,',{a:'start'})+T(cx+r+80,cy-29,'stred čapu M12',{a:'start'})+T(cx+r+80,cy-13,'nastaviteľný r 25 až 35',{a:'start'});
+ o+=T(cx+r+80,cy+34,'Drážka pre pero 8',{a:'start'})+T(cx+r+80,cy+50,'(8×7, hĺbka 3,3)',{a:'start'});
+ o+=T(cx,cy+r+34,'Hrúbka 20. Materiál: oceľ, sústruh.',{c:'dx'});
+ return fig('<b>P3</b> Excentrický kotúč · Ø120×20 · 1 ks','Excentricita (stred čapu od osi) 25 až 35 mm, zdvih sita 50 až 70 mm.',svg(700,cy+r+50,o,'Excentrický kotúč'),0);
+}
+
+/* ---------- zostava ---------- */
+function side(){
+ var s=.34,X=function(y){return 70+(y+300)*s;},Z=function(z){return 730-z*s;},o='';
+ o+=Ln(30,Z(0),1110,Z(0),'ol');
+ function leg(y,h){return '<rect class="sh" x="'+(X(y)-25*s)+'" y="'+Z(h)+'" width="'+(50*s)+'" height="'+(h*s)+'"/>';}
+ o+=leg(600,2000)+leg(2000,1000);
+ o+='<rect class="sh" x="'+(X(600)+25*s)+'" y="'+Z(1800)+'" width="'+(8*s+3)+'" height="'+(700*s)+'"/>'+T(X(600)+60,Z(1800)-6,'perforovaný nosník N1 (1100 až 1800)',{a:'start'});
+ (function(){var c=Math.cos(20*R),sn=Math.sin(20*R),p=function(q,n){return [X(1890-q*c+n*sn),Z(980+q*sn+n*c)];};var a0=p(20,90),a1=p(-450,-160);var mq=[[-630,10],[-450,10],[-450,170],[-630,170]].map(function(v){return p(v[0],v[1]);});o+='<polygon class="sh" points="'+mq.map(function(v){return v[0]+','+v[1];}).join(' ')+'"/>';var mc=p(-540,90);o+=T(mc[0],mc[1]+4,'motor (pravá str.)',{});var rt=p(-540,90),rs2=p(-5,96);o+=Ln(rt[0],rt[1]-20,rs2[0],rs2[1],'hid');o+=Ln(a0[0],a0[1],a1[0],a1[1],'th3');o+=T(a1[0]+8,a1[1]-8,'výsyp 650 (pri 20°)',{a:'start'});o+='<rect class="hid" x="'+X(2040)+'" y="'+Z(580)+'" width="'+(600*s)+'" height="'+(280*s)+'"/>'+T(X(2340),Z(580)+28,'fúrik (zboku)',{});})();
+ // cart
+ o+='<rect class="hid" x="'+X(520)+'" y="'+Z(900)+'" width="'+(1300*s)+'" height="'+(900*s)+'"/>'+T(X(1170),Z(450),'vozík 1300×900',{});
+ // rails
+ var P=[X(1890),Z(980)];
+ [10,20,30].forEach(function(t){
+  var c=Math.cos(t*R),sn=Math.sin(t*R),a=function(q,n){return [X(1890-q*c+n*sn),Z(980+q*sn+n*c)];};
+  var p1=a(-700,0),p2=a(1450,0);
+  o+='<line class="'+(t===20?'th3':'hid')+'" x1="'+p1[0]+'" y1="'+p1[1]+'" x2="'+p2[0]+'" y2="'+p2[1]+'"/>';
+  var zb=980+1290*Math.tan(t*R);
+  o+='<circle class="ol" cx="'+X(600)+'" cy="'+Z(zb-8)+'" r="3.5"/><circle class="ol" cx="'+X(600)+'" cy="'+Z(zb+58)+'" r="3.5"/>';
+  o+=T(p2[0]-4,p2[1]-8,t+'°',{a:'end',c:'dx'});
+  if(t===20){var s1=a(0,96),s2=a(1500,96);o+='<line class="th3" style="stroke:var(--accent)" x1="'+s1[0]+'" y1="'+s1[1]+'" x2="'+s2[0]+'" y2="'+s2[1]+'"/>';
+   o+=T(s2[0]+6,s2[1]-6,'sito 1500 (pri 20°)',{a:'start'});
+   }
+ });
+ o+='<circle class="ol" cx="'+P[0]+'" cy="'+P[1]+'" r="5"/>'+T(P[0]+10,P[1]+22,'čap koľajníc',{a:'start'});
+ o+=dV(Z(2000),Z(0),X(600)-40,'2000',X(600)-9);
+ o+=dV(Z(1000),Z(0),X(2000)+44,'1000',X(2000)+9);
+ o+=dV(Z(980),Z(0),X(2000)+92,'980 (os čapu)',X(1890)+9);
+ o+=dV(Z(1800),Z(1100),X(600)-92,'700 (N1)',X(600)-9);
+ o+=dH(X(600),X(2000),Z(0)+34,'1400 medzi osami nôh',Z(0));
+ o+=T(60,Z(0)+62,'Polohy nôh (600 a 2000) sú odvodené z modelu, čap koľajníc je 110 pred nízkou nohou (1890). Rozmery v mm.',{a:'start'})+T(60,Z(0)+80,'Čiarkované polohy koľajníc: 10° a 30°. Kolíky N3 (kruhy) sa prekladajú po 33 mm: spodný nesie, horný zaisťuje.',{a:'start'});
+ return fig('<b>Zostava</b> bokorys','Pohľad z ľavej strany, vysoký koniec (vjazd vozíka) vľavo. Motor je na pravej strane, preto je zakreslený za rámom.',svg(1120,Z(0)+96,o,'Bokorys'),1);
+}
+function front(){
+ var s=.34,X=function(x){return 200+x*s;},Z=function(z){return 450-z*s;},o='';
+ // pohľad od výsypu: x=0 (strana motora) je vpravo, preto sa x zrkadlí
+ function rc(x,w,z0,z1,cls,st){return '<rect class="'+cls+'"'+(st?' style="'+st+'"':'')+' x="'+X(1450-x-w)+'" y="'+Z(z1)+'" width="'+(w*s)+'" height="'+((z1-z0)*s)+'"/>';}
+ o+=Ln(40,Z(0),X(1450)+60,Z(0),'ol');
+ o+=rc(0,50,0,1000,'sh')+rc(1400,50,0,1000,'sh');
+ [180,790].forEach(function(z){o+=rc(5,1440,z-25,z+25,'sh');});
+ o+=rc(80,50,980,1030,'sh')+rc(1320,50,980,1030,'sh');
+ o+=rc(125,1200,1040,1100,'ol','stroke:var(--accent)');
+ o+=T(X(725),Z(1100)+(60*s)+14,'sito 1200',{c:'dx'});
+ o+=rc(-525,450,790,950,'sh');
+ o+=T(X(1750),Z(870)+4,'motor',{});
+ o+=T(X(1345),Z(980)+16,'PRAVÁ',{c:'dx'})+T(X(105),Z(980)+16,'ĽAVÁ',{c:'dx'});
+ o+=dH(X(0),X(1450),Z(0)+34,'1450',Z(0));
+ o+=dH(X(5),X(1445),Z(0)+62,'1440 (K4)',Z(0));
+ o+=dH(X(80),X(1370),Z(1100)-34,'1290 (rozpätie koľajníc, 1190 vo vnútri)',Z(1000));
+ o+=dV(Z(1000),Z(0),X(0)-30,'1000',X(0));
+ o+=dV(Z(180),Z(0),X(0)-106,'180 (os K4)',X(0));
+ o+=dV(Z(790),Z(0),X(0)-68,'790 (os K4)',X(0));
+ return fig('<b>Zostava</b> predný pohľad','Pohľad od výsypu (stojíš pri fúriku): motor je vpravo, preto je pravá strana koľajníc vpravo.',svg(900,Z(0)+90,o,'Predný pohľad'),0);
+}
+function plan(){
+ var s=.34,X=function(x){return 210+(1450-x)*s;},Y=function(y){return 60+(y+100)*s;},o='';
+ function rc(x,y,w,h,cls,st){return '<rect class="'+cls+'"'+(st?' style="'+st+'"':'')+' x="'+X(x+w)+'" y="'+Y(y)+'" width="'+(w*s)+'" height="'+(h*s)+'"/>';}
+ [0,1400].forEach(function(x){[600,2000].forEach(function(y){o+=rc(x,y-25,50,50,'sh');});});
+ o+=Ln(X(25),Y(600),X(25),Y(2000),'ol')+Ln(X(1425),Y(600),X(1425),Y(2000),'ol');
+ var c=Math.cos(20*R);
+ o+=rc(80,1890-1450*c,50,(1450+700)*c,'sh')+rc(1320,1890-1450*c,50,(1450+100)*c,'sh');
+ o+=rc(125,1890-1500*c,1200,1500*c,'ol','stroke:var(--accent)');
+ o+=T(X(725),Y(1890-750*c)+4,'sito 1200×1500 (priemet pri 20°)',{});
+ o+=T(X(105),Y(1890-1450*c)-8,'PRAVÁ (motor)',{c:'dx'})+T(X(1345),Y(1890-1450*c)-8,'ĽAVÁ',{c:'dx'});
+ (function(){var sn=Math.sin(20*R),yy=function(q,n){return 1890-q*c+n*sn;};
+  var y0=yy(20,90),y1=yy(-450,-160);
+  o+='<polygon class="sh" style="stroke:var(--accent)" points="'+X(175)+','+Y(y0)+' '+X(1275)+','+Y(y0)+' '+X(1050)+','+Y(y1)+' '+X(400)+','+Y(y1)+'"/>';
+  o+=rc(325,2040,800,600,'hid');o+=T(X(725),Y(2040)+(600*s)+16,'fúrik zboku, korba 800×600',{});
+  o+='<circle class="ol" cx="'+X(195)+'" cy="'+Y(2340)+'" r="'+(140*s)+'"/>'+T(X(195),Y(2340)+4,'koleso',{});
+  o+=Ln(X(1125),Y(2140),X(1700),Y(2140),'th3')+Ln(X(1125),Y(2540),X(1700),Y(2540),'th3')+T(X(1420),Y(2340)+4,'rúčky',{});
+  o+=dH(X(400),X(1050),Y(y1)-8,'650 výsyp',Y(y1));
+  o+=dH(X(325),X(1125),Y(2640)+40,'800 korba',Y(2640));})();
+ o+=rc(-525,2310,450,170,'sh')+T(X(-75),Y(2310)-6,'motor + prevodovka',{a:'start'})+Ln(X(-75),Y(2395),X(130),Y(2395),'th3');
+ o+=dH(X(0),X(1450),Y(-40)-20,'1450 (vonkajší rozmer)',Y(600-25));
+ o+=dV(Y(600),Y(2000),X(1450)-40,'1400',X(1450));
+ return fig('<b>Zostava</b> pôdorys','Pohľad zhora. Stojíš dole pri fúriku a pozeráš na stroj: motor a koleso fúrika sú vpravo, rúčky vľavo. Vysoký koniec (vjazd vozíka) je hore.',svg(900,Y(2640)+70,o,'Pôdorys'),0);
+}
+
+/* ---------- zloženie stránky ---------- */
+var host=document.getElementById('dw');
+function sec(t){var h=document.createElement('h3');h.className='dsec';h.textContent=t;host.appendChild(h);}
+function grid(items,cls){var g=document.createElement('div');g.className=cls||'dgrid';items.forEach(function(i){g.appendChild(i);});host.appendChild(g);}
+sec('Zostava');
+grid([side(),front(),plan()],'dfull');
+sec('Profily a plochá oceľ, rezný plán');
+var p=document.createElement('p');p.className='hint';p.textContent='Ľavá a pravá strana sú z pohľadu od výsypu: stojíš pri fúriku a pozeráš na stroj, motor je vpravo. Dielce označené štítkom ĽAVÁ alebo PRAVÁ nie sú zameniteľné (zrkadlové alebo rôzne dlhé), ostatné sú rovnaké. Dlhšia hrana je vonkajšia hrana profilu. Vysunutie je o koľko je kratšia hrana odsadená od dlhšej na danom konci: hrúbka profilu × cot α. Kratšia hrana = dlhšia mínus obe vysunutia. Uhol je medzi rezom a osou profilu. Uhol píly je odchýlka od kolmého rezu (90° mínus uhol). U L profilov režeš cez obe ramená.';
+host.appendChild(p);
+grid(BARS.map(bar));
+sec('Plechy a platne');
+grid(PLATES.map(poly));
+sec('Excentrický kotúč');
+grid([disc()]);
+/* ---------- návod na zostavenie ---------- */
+function frameFig(){
+ var s=.27,X=function(y){return 70+y*s;},Z=function(z){return 560-z*s;},o='';
+ o+=Ln(30,Z(0),X(1400)+210,Z(0),'ol');
+ function rc(y,w,z0,z1,cls,st){return '<rect class="'+cls+'"'+(st?' style="'+st+'"':'')+' x="'+X(y-w/2)+'" y="'+Z(z1)+'" width="'+(w*s)+'" height="'+((z1-z0)*s)+'"/>';}
+ o+=rc(0,50,0,2000,'sh')+rc(1400,50,0,1000,'sh');
+ [120,850].forEach(function(z){o+='<rect class="sh" x="'+X(-20)+'" y="'+Z(z+25)+'" width="'+(1440*s)+'" height="'+(50*s)+'"/>';});
+ o+=Ln(X(0),Z(1350),X(450),Z(850),'th3')+Ln(X(1400),Z(550),X(1000),Z(850),'th3')+Ln(X(0),Z(450),X(400),Z(850),'th3')+Ln(X(1400),Z(520),X(1000),Z(120),'th3');
+ o+=rc(0,50,1100,1800,'hid')+T(X(60),Z(1800)-6,'N1 A+B (1100 až 1800)',{a:'start'});
+ o+=Ln(X(25),Z(1020),X(120),Z(1020),'dm')+T(X(130),Z(1020)-4,'rám lievika L1 + spojky L2, os v 1020',{a:'start'});
+ o+='<circle class="ol" cx="'+X(1290)+'" cy="'+Z(980)+'" r="5"/>'+T(X(1290),Z(980)+22,'os čapu 980',{});
+ o+=Ln(X(1290),Z(980),X(1400),Z(980),'th3')+T(X(1345),Z(980)-8,'V8',{});
+ o+=rc(0,50,1925,1975,'sh','stroke:var(--accent)');
+ o+=T(X(60),Z(1950)+4,'K8 horný priečnik, os 1950',{a:'start'});
+ o+=rc(0,120,-8,0,'sh')+rc(1400,120,-8,0,'sh');
+ o+=dH(X(0),X(1400),Z(0)+40,'1400 medzi osami nôh',Z(-8));
+ o+=dH(X(-20),X(1420),Z(0)+68,'1440 dĺžka K3',Z(-8));
+ o+=dV(Z(2000),Z(0),X(0)-62,'2000 (K1)',X(0)-25);
+ o+=dV(Z(1000),Z(0),X(1400)+62,'1000 (K2)',X(1400)+25);
+ o+=dV(Z(145),Z(95),X(1400)+130,'K3 os 120',X(1400)+25);
+ o+=dV(Z(875),Z(825),X(1400)+130,'K3 os 850',X(1400)+25);
+ o+=dH(X(0),X(450),Z(850)+60,'450',Z(850));
+ o+=dH(X(1000),X(1400),Z(850)+60,'400',Z(850));
+ o+=T(X(8)+60,Z(1350)-6,'vzpera K5a, ku nohe v 1350',{a:'start'});
+ o+=T(X(1400)-20,Z(550)-6,'vzpera K5b, ku nohe v 550',{a:'end'});
+ o+=T(X(8)+60,Z(450)+14,'kolenová vzpera K9, ku nohe v 450',{a:'start'});
+ o+=T(X(1400)-20,Z(520)+14,'kolenová vzpera K9, ku nohe v 520',{a:'end'});
+ return fig('<b>Bočný rám</b> (ľavý aj pravý sú rovnaké)','Pohľad zboku: vysoká noha (vjazd vozíka) vľavo, nízka (výsyp) vpravo. Výšky od hornej plochy päty.',svg(900,Z(-8)+100,o,'Bočný rám'),1);
+}
+var STEPS=[
+{t:'Príprava, rezanie a označenie',p:'všetky dielce',i:[
+'Vyrež všetko podľa výkresov a rozpisu. Pri L profiloch režeš cez obe ramená, šikmé rezy robíš až po kontrole uhla podľa výkresu (uhol píly nájdeš pri každom dielci).',
+'Hneď po rezaní napíš na každý dielec jeho číslo (K1, V1, …) a pri párových dielcoch aj L alebo P (pravá strana je strana motora, pohľad od výsypu). Páry označené ĽAVÁ + PRAVÁ sú zrkadlové, ostatné sú rovnaké.',
+'Otvory vyvŕtaj pred zváraním: päty K6 (4× Ø13), perforované nosníky N1 (20× Ø17), konzoly V8 (Ø21), ojnica P6 (2× Ø16), konzola S8 (Ø13), doska pod motor M3. Veľké otvory najprv predvŕtaj Ø8.',
+'Hrany a otrepy zbrús. Povrch pod zvarom očisti na kov (brúska), zvary robíš na čistý materiál.',
+'L profily nôh K1 a K2 montuj tak, aby vonkajší roh profilu smeroval von z rohu stroja a otvorená strana (kút) dovnútra. Priečniky K3, K4 a K8 sa zasúvajú do kúta nôh, detail je pri krokoch 3 a 4. Pozor: dĺžky K3, K4 a K8 sú 1440, nie 1350.',
+'Pracovná plocha: rovná podlaha alebo stôl. Potrebuješ zvinovací meter, uholník, vodováhu, svorky a dve prípravky na držanie 90°.'],
+chk:'Skontroluj, že máš všetky dielce a že sa počet zhoduje s rozpisom. Dĺžky, ktoré sa na výkrese kontrolujú priložením (vzpery, rám lievika), sa dorábajú až pri montáži.'},
+{t:'Zásady zvárania (platia pre všetky kroky)',p:'',i:[
+'Postup vždy: dielec prilož a zameraj, zvar len stehy dlhé 15 až 20 mm, skontroluj rozmery a uhlopriečky, až potom zvar plné zvary.',
+'L profil 5 mm: kútový zvar a = 3 až 4 mm. Plech 2 mm: stehy po 20 mm každých 80 až 100 mm, potom prerušované zvary; nepáľ, plech sa krúti. Plech vždy zváraj krátkymi úsekmi a nechaj chladnúť.',
+'Zvárať striedavo z oboch strán a z opačných rohov, inak sa profil zvaruje do banánu. Nosné spoje (päty, čap koľajníc, nosníky N1, konzola ojnice S8) vždy obvarovať celým obvodom.',
+'Rovnosť: každý rám po stehoch skontroluj uhlopriečkami. Pri odchýlke nad 3 mm stehy odbrús a oprav, nezvar to.',
+'Pred konečným lakovaním odstráň strusku, zvary zbrús v miestach, kde sa dosadajú ďalšie diely (police koľajníc, plochy pre kolesá).',
+'Ochrana: zváračská kukla, rukavice, nehorľavý odev. Odstráň horľavé veci z okolia. Elektrické zapojenie motora nechaj elektrikárovi.'],
+chk:'Najprv vyskúšaj zvary na odrezku, aby si nastavil prúd.'},
+{t:'Bočné rámy (2 ks, rovnaké)',p:'K1, K2, K3, K5, K6, K9',fig:'frame',i:[
+'Polož na podlahu K1 (2000) a K2 (1000) rovnobežne, osi 1400 od seba, vonkajší roh L profilu von z rohu stroja. Pätky K6 prilož ku spodným koncom a obvaruj nohy k pätkám celým obvodom (noha kolmo, kontrola uholníkom).',
+'K3 sú rezané kolmo na 1440. Zasuň každý K3 do kúta nôh: jeho zvislé rameno naľahne na vnútornú stranu ramena nohy rovnobežného s K3 (zvar po hrane, aspoň 40 mm na konci) a čelo K3 dosadne na vnútornú stranu druhého ramena nohy (zvar po čele). Vodorovné rameno K3 smeruje dovnútra stroja. Spodná hrana K3 je vo výške 95 (K3a, spodné, 2 ks) a 825 mm (K3b, horné, 2 ks) od hornej plochy pätky (os 120 a 850). Horné K3b majú vo vodorovnom ramene okno 45 × 85 mm, 348 mm od konca pri nízkej nohe (výkres K3b): vyrež ho pred zváraním (rohy predvŕtaj Ø8, potom uhlová brúska). Najprv len stehy. Skontroluj uholníkom, že K3 sú kolmé na nohy a rovnobežné, a že rám leží na podlahe celou plochou.',
+'Vzpery K5: vysokú K5a (723, rezy 42° a 48°) prilož tak, aby jej horný koniec dosadol na vysokú nohu v osi 1350 od zeme a dolný na horný nosník K3 450 od osi nohy smerom k nízkej nohe. Nízku K5b (552, rezy 53,1° a 36,9°) prilož tak, aby dolný koniec dosadol na nízku nohu v osi 550 od zeme a horný na horný nosník K3 400 od osi nízkej nohy. Zvislé rameno vzpery (v rovine rámu) naľahne na vnútornú stranu zvislého ramena K3, druhé rameno vzpery smeruje von z trojuholníka. K5a stojí spodným koncom na vodorovnom ramene K3b. K5b prechádza oknom v K3b a končí v rovine hornej hrany K3b. Druhý koniec každej vzpery zasuň do kúta nohy čelom na rameno nohy. Dlhšia hrana patrí na vonkajšiu stranu rámu. Najprv ju dolaď priložením, až potom zvaruj.',
+'Kolenové vzpery K9 (616, oba rezy 45°, štyri kusy, dva na každý rám) zvierajú s nohou a nosníkom uhol 45° a znižujú kývanie rámu pri chode motora. Pri vysokej nohe K1: spodný koniec dosadni do kúta nohy v osi 450 od zeme, horný koniec pod vodorovné rameno K3b, 400 mm od osi nohy smerom k nízkej nohe (vzpera visí pod K3b). Pri nízkej nohe K2: horný koniec dosadni do kúta nohy v osi 520 od zeme, spodný koniec na vodorovné rameno K3a, 400 mm od osi nohy smerom k vysokej nohe (vzpera stojí na K3a). Vzpera sa vždy opiera zvislým ramenom o vnútornú stranu zvislého ramena K3 a druhým ramenom smeruje von z trojuholníka, rovnako ako K5. Vzpery nesmú vyčnievať z rámu viac ako 50 mm dovnútra, vozík medzi rámami má na každú stranu voľných 125 mm. Dolaď priložením, až potom zvaruj.',
+'Zvar K3, K5 a K9 plnými zvarmi. Druhý rám je rovnaký: zvár ho rovnakým postupom, dá sa jednoducho otočiť o 180°.'],
+chk:'Každý rám: výška vysokej nohy 2000, nízkej 1000, os K3 120 a 850, K3 dlhé 1440 a v kúte nôh, osi nôh 1400 od seba, K3 rovnobežné, rám rovný (nekrúti sa).'},
+{t:'Spojenie rámov (základná kostra)',p:'K4, K3, K6',i:[
+'Postav oba rámy rovnobežne na rovnú podlahu, osi nôh v priečnom smere 1400 od seba (vnútri 1350), vysoké nohy na jednom konci (vjazd vozíka), nízke na druhom (výsyp).',
+'Na nízkom konci zasuň K4 (2 ks, kolmý rez 1440) do kúta nízkych nôh rovnako ako K3: zvislé rameno na rameno nohy rovnobežné s K4, čelo na druhé rameno nohy, spodné rameno k vysokému koncu. Osi K4 sú 180 a 790 od hornej plochy pätky (spodné hrany 155 a 765), teda 60 mm nad a pod K3. Vďaka tomu sa K3 a K4 v rohu nezrazia a medzi hranami je 10 mm na zváranie. Najprv stehy.',
+'Vysoký koniec zatiaľ nespájaj, priečnik tam nie je. Dočasne pripevni latu s osami skrutiek 1400 medzi vysoké nohy v dvoch výškach, aby rozstup držal. Neskôr ho nahradí rám lievika a K8.',
+'Kontrola: uhlopriečky pôdorysu osí nôh 1980 ±3 mm, kolmosť všetkých nôh vodováhou v oboch smeroch, ťažisko stability: rám nesmie kolísať. Rozmer uhlopriečky meraj medzi osami nôh na podlahe.',
+'Po kontrole zvar plné zvary, ukotvi k betónu K7 cez pätky K6 (otvory Ø13, kotvy M12×120). Pred vŕtaním do betónu skontroluj, že pod ním nie je rozvod alebo výstuž.'],
+chk:'Uhlopriečka 1980 ±3 mm, nohy kolmé, nič sa nehýbe.'},
+{t:'Rám lievika (zatiaľ len na stehy)',p:'L1, L2',i:[
+'Mimo stroja zvar rám lievika z L1: 2 × 1160 a 2 × 1480, rohy gérung 45° (kratšia hrana 1060 a 1380). Dlhšia hrana je vonkajší rozmer 1160×1480. Kontrola uhlopriečky 1880 ±2 mm.',
+'Rám dvihni medzi nohy do výšky osi 1020 od zeme a zarovnaj symetricky: po bokoch 120 mm od osí nôh a v pozdĺžnom smere predná krátka strana (strana vjazdu) 120 mm pred osami vysokých nôh, zadná krátka strana 40 mm pred osami nízkych nôh.',
+'L2 (4 ks po 150) prilož vodorovne medzi nohu a rám lievika vo výške 1020, vždy v mieste, kde noha prechádza okolo rámu. Zatiaľ len stehy, zvar až po kontrole voľných priestorov (krok 12).'],
+chk:'Rám je vodorovný (vodováha), výška osi 1020, rovnomerne vzdialený od všetkých nôh. Spodný okraj lievika je os rámu mínus 100. Model počíta s osou 1020 (medzera 2 cm nad vozíkom); ak chceš medzeru 3 až 5 cm, daj rám na 1030 až 1050 podľa skutočnej výšky vozíka.'},
+{t:'Plechy lievika',p:'L3, L4, L5, L7',i:[
+'Z plechu 2 mm vystrihni steny lievika podľa výkresov L3a (2 bočné), L3b (zadná, strana výsypu) a L3c (predná, takmer zvislá, strana vjazdu). Rozvin sú orientačné: najprv ich vystrihni z kartónu a priprav.',
+'Bočné steny sú lichobežníky, dlhšia hrana pri ráme L1, kratšia dole. Zvár ich stehmi k L1 a k sebe v rohoch, potom prerušovanými zvarmi. Prekryv hrán 15 mm.',
+'Predná stena je takmer zvislá, aby lievik nezasahoval do vozíka. Zvár ju k L1 a k bokom.',
+'Po lakovaní pripevni gumu L4 pod spodné hrany lievika prítlačnými lištami L5 (skrutky M6×20 po 150 mm, L7).'],
+chk:'Steny sú tesné, lievik nepúšťa zeminu vedľa vozíka.'},
+{t:'Koľajnice a pojazd (mimo stroja)',p:'V1, V2, V3, V4, V5, V6',i:[
+'Polož V1 (pravá, 2150) a V2 (ľavá, 1550) na rovnú plochu, vonkajšie hrany 1290 od seba (medzi zvislými ramenami 1280, medzi okrajmi políc 1190). Police (vodorovné ramená) smerujú dovnútra stroja, zvislé ramená smerujú nadol a von. Otvory Ø21 pre čap musia byť v jednej osi: sú 700 od konca V1 a 100 od konca V2, takže oba konce sú zarovnané na jednej strane (smerom k vysokému koncu sú obe koľajnice rovnako dlhé).',
+'Priečne spoje V3 (2 × 1280, kolmý rez) zasuň pod police medzi zvislé ramená: vodorovné rameno V3 naľahne zospodu na police (zvar po obvode, 45 mm na každom konci), čelo dosadne na zvislé ramená. Jeden V3 je 60 mm za osou čapu (k motoru), druhý 1200 od osi čapu k vysokému koncu (nie ďalej, inak by pri niektorom sklone zavadzal o nosníky pri vysokých nohách). Skontroluj rovnobežnosť meraním rozstupu na oboch koncoch a uhlopriečkou medzi otvormi pre čap a koncami koľajníc.',
+'Zvár plné zvary V3. Skontroluj rovinu polic, nesmú byť zvlnené, po nich sa kolesá kotúľajú.'],
+chk:'Čapy V1 a V2 v osi (priložením tyče Ø20), rozstup zvislých ramien 1280 vnútri, police v jednej rovine.'},
+{t:'Rám sita a pletivo',p:'S1 až S6, S9',i:[
+'Z L profilov zvár obvodový rám S1: 2 × 1500 a 2 × 1200, rohy gérung 45° (kratšia hrana 1400 a 1100), vonkajší rozmer 1500×1200. Uhlopriečka 1921 ±2 mm. Vodorovné ramená smerujú dovnútra rámu a tvoria plochu pre pletivo, zvislé ramená smerujú nadol.',
+'Prečné výstuhy S2 (3 × 1190) medzi dlhé strany rámu, osi 400, 770 a 1150 mm od spodného okraja. Každej vyrež na oboch koncoch hore roh 5 × 45, zasuň pod police rámu tak, aby horná hrana výstuhy lícovala s hornou plochou polic, a zvár T-zvarom pod políc (45 mm na koniec) a čelom na zvislé rameno rámu. Pozdĺžna S3 (1490) v strede medzi krátke strany, rovnako vyrezané rohy. Zvár prerušovane.',
+'Pletivo S4 polož, napni a pritlač lištami S5 (2 × 1450, 2 × 1100) po obvode a na výstuhy, skrutky M6×20 po 150 mm (S9) alebo bodové zvary po 5 cm.',
+'Bočnice S6 (2 × 1500) a zadnú stenu (1200) priprav z plechu 2 mm, ohyb 15 mm dole. Zvár ich k rámu sita po obvode. Zadná stena patrí na vysoký koniec sita.',
+'Konzolu ojnice S8 (300) privar k vonkajšej strane pravého boku sita (strana motora), 270 mm po dĺžke rámu, 30 mm presahuje za dolný okraj. Otvor Ø13 je 40 mm od presahujúceho konca.'],
+chk:'Pletivo je napnuté a nepodlieha, rám je plochý, uhlopriečka 1921 ±2.'},
+{t:'Kolesá a vodiace kladky sita',p:'V4, V5, V6',i:[
+'Na každú dlhú stranu rámu sita namontuj 2 kolesá V4: osi 340 a 1260 od spodného okraja sita (kolesá musia byť mimo konzoly ojnice S8, ktorá siaha do 270). V5 (Ø20×60) zvár cez otvor Ø20 v zvislom ramene rámu, kolesá na ne nasaď zvonku a zaisti krúžkom.',
+'Os kolesa je 50 mm nad hornou plochou police koľajnice a spodná hrana rámu sita aspoň 10 mm nad policou. Kolesá musia ležať na polici, nie na hrane.',
+'Vodiace kladky V6 (4 ks) priskrutkuj k bokom sita tak, aby sa dotýkali zvislého ramena koľajnice a bránili bočnému posunu (vôľa 1 až 2 mm).'],
+chk:'Sito sa dá voľne posúvať po koľajniciach ručne, nevzpiera sa.'},
+{t:'Nastavenie sklonu: konzoly, nosníky a kolíky',p:'V8, V7, N1, N2, N3',i:[
+'Konzoly V8 (2 × 150) privar k vnútornej strane nízkych nôh. Os otvoru Ø21 je vo výške 980 od zeme a 110 mm od osi nohy smerom k vysokému koncu. Pri skúške priložením koľajnice nastav presnú polohu, otvory musia byť v osi s otvormi v koľajniciach.',
+'Perforované nosníky N1 (4 ks): Koľajnicu polož do jej konečnej polohy (vonkajšia hrana 80 mm od vonkajšej hrany nohy). A privar na vnútornú stranu vysokej nohy (kolmo, dolný koniec vo výške 1100). B postav 2 mm od vnútorného okraja koľajnice. V modeli je medzi A a B priechod 76 mm, koľajnica je o 22 mm bližšie k B, kolík to preklenie.',
+'Mostík N2 (100 mm) priloží vodorovne pod dolné konce nosníkov A a B jednej nohy a spojí ich (zvar po obvode). Os otvorov pre kolíky je v rovnakej výške u A aj B. Dolný kolík nesie, horný je o 3 otvory (99 mm) vyššie a je len poistka proti nadskočeniu pri vibrácii.',
+'Kolíky N3 (Ø16 × 120) zasuň cez otvory A a B pod koľajnicu (spodný) a nad ňu (horný), zaisti R-klipom. Dĺžka kolíka zodpovedá šírke priechodu A–B.'],
+chk:'Pred konečným zvarom zdvihni koľajnice a skús všetky polohy od 10° do 30°. Nosníky nesmú zavadzať polici koľajnice. POZOR: nosník B stojí 132 až 140 mm od vonkajšej hrany nohy, rám sita začína už 125 mm, takže B môže zavadzať rámu sita. Zváraj B až po vyskúšaní so sitom na mieste (krok 11) a pri kolízii ho skráť pod úroveň dolného kolíka, alebo ho vynechaj a kolík vedie len A.'},
+{t:'Osadenie koľajníc a sita',p:'V1, V2, V7',i:[
+'Koľajnice so sitom (spolu asi 110 až 130 kg s motorom) zdvihni naraz minibagrom alebo kladkostrojom, nikdy rukou. Sito drž v strede koľajníc, aby sa nevyvrátilo.',
+'Zasuň koľajnice medzi V8 a čapy V7 (Ø20 × 140) dopredu, zaisti poistkou. Na vysokom konci koľajnice prejdú medzi nosníkmi A a B.',
+'Zdvihni koľajnice, vlož kolíky N3 do zvolených otvorov a vyskúšaj polohy od 10° do 30°. Pri 20° nemá sito zavadzať lieviku ani vysokým nohám.'],
+chk:'Koľajnice sa otáčajú okolo čapu bez zadrhávania, sito ide po nich rovno.'},
+{t:'Kontrola voľných priestorov a konečné zvary',p:'L1, L2, K4',i:[
+'Koľajnice sklop na 10° a 30° a skontroluj: 1) polica koľajnice sa nedotýka rámu lievika, voľný priestor aspoň 20 mm; ak sa dotýka, posuň rám L1 dovnútra o 20 až 30 mm. 2) Výsyp S7 prejde nad horným priečnikom K4 s medzerou aspoň 30 mm; K4 je už nižšie podľa kroku 4 a medzera má byť väčšia. 3) Kolesá sita nenarážajú na V3. 4) Sito sa nedotýka lievika.',
+'Po úprave zvar L1 a L2 plnými zvarmi okolo dokola. Rám lievika spolu s L2 je zároveň hlavná bočná stužka stroja. K4 dokonči.',
+'K8 (odporúčaný): privar horný priečnik (kolmý rez 1440) do kúta vysokých nôh, vo výške osi 1950 (spevňuje vysoké nohy proti bočnému kývaniu, bez neho je bočný pohyb vrcholu asi o tretinu väčší). Ak tam budeš zavesovať kladkostroj, zváraj aj závesné oko.'],
+chk:'V celom rozsahu 10° až 30° sa nič nedotýka.'},
+{t:'Motor, prevodovka a ojnica',p:'M1, M2, M3, M4, M5, P1 až P9',i:[
+'Konzoly M1 (2 × 650) privar kolmo k vonkajšej strane pravej koľajnice V1 (strana motora), na jej dolné predĺženie, osi 450 a 630 pod čapom (180 od seba), smerujú von. Koncami ich spojí M2 (180).',
+'Doska M3 (300×200, 8 mm) leží na M1, os otvorov je uprostred medzi ramenami. Zvár po obvode. Motor s prevodovkou P1/P2 priskrutkuj M4 (M10) cez oválne otvory. Výstupný hriadeľ smeruje do stroja, v osi kolmej na koľajnicu.',
+'Na hriadeľ nasaď excentrický kotúč P3 s perom P4 a zaisti čelnou podložkou. Do drážky kotúča zasuň čap P5 (M12×60), polohu nastav na excentricitu 25 mm (zdvih 50 mm) a dotiahni.',
+'Ojnicu P6 (610, otvory Ø16 so zálisami P7) nasaď na P5 a na čap P8 (M12×70) v konzole S8. Vzdialenosť osi hriadeľa od osi čapu S8 je 570 mm: ak sa nezhoduje, doladí sa polohou dosky M3 v oválnych otvoroch. Výšku hriadeľa nastav podložkami tak, aby os hriadeľa a os čapu S8 boli rovnako vysoko nad policou koľajnice (ojnica rovnobežne).',
+'Osi hriadeľa, čapu a ojnice musia byť rovnobežné s koľajnicou a navzájom rovnobežné. Kryt M5 prikry rotujúce časti, nikdy neprevádzkuj bez neho.'],
+chk:'Ručne otoč excentrom o plnú otáčku: ojnica sa nezadrháva, sito sa kýva v rozsahu 50 mm, nič nedrie.'},
+{t:'Výsyp sute',p:'S7, S10',i:[
+'Z plechu 2 mm priprav dno S7 (lichobežník 1100/650, výška 532) a dve bočné steny S10 (578 × 155). Steny stoja kolmo na dne, v pôdoryse šikmo pod 22,9°, zbiehajú sa k výsypu.',
+'Zvár dno k spodnému priečnemu profilu rámu sita (S1), dno je zlomené o 28° k situ, aby suť stekala aj pri nízkom sklone. Pripevni steny S10 a vystuž horný lem 15 mm.',
+'Skontroluj: výsyp 650 je užší než korba fúrika (800) a pri sklone 30° (výsyp najnižšie) je medzi ním a okrajom korby aspoň 30 mm. Ak nie, podlož fúrik.'],
+chk:'Suť z pletiva steká priamo do korby, nič nepadá mimo.'},
+{t:'Povrchová úprava, ukotvenie a elektrika',p:'Z1, Z2, Z4, K7, E1 až E5',i:[
+'Všetko zbrús, odmasti, natri základnou farbou a emailom. Neprefarbuj plochy pre kolesá, ložiská a styky čapov. Ložiská namaž (Z4).',
+'Skontroluj kotvenie K7 a dotiahni všetky skrutky. Matice na vibrujúcich miestach sú samoistiace.',
+'Elektrinu zapojí elektrikár: motorový istič, tlačidlá START a STOP, zásuvka CEE, kábel mimo pohybu ojnice. STOP musí byť na dosah obsluhy.'],
+chk:'Kontrola revízie elektro pred prvým spustením.'},
+{t:'Skúšobná prevádzka',p:'',i:[
+'Bez záťaže: spusti na 1 minútu, sleduj zvuk, vibrácie, ojnicu a čap, smer otáčania. Po 5 minútach vypni a skontroluj všetky skrutky.',
+'S malým množstvom suchej zeminy: sklon 15 až 20°, sleduj priebeh. Ak sa sito kýva nerovnomerne, skontroluj kolesá a vodiace kladky.',
+'Po prvej hodine prevádzky dotiahni matice, skontroluj zvary nosných spojov (čap, N1, S8, päty), a každý deň pred prácou skontroluj kolíky N3 a ich R-klipy.',
+'Pri zmene sklonu: sito vypni, ulahči zaťaženie navijakom, vyber horný kolík, zdvihni oba kraje naraz, vlož kolíky a zaisti. Nikdy nemeň sklon pod záťažou ani pri bežiacom motore.'],
+chk:'Stroj beží pokojne, všetko drží.'}
+];
+/* ---------- izometrické obrázky krokov (štýl návodu IKEA/LEGO) ---------- */
+var ISO=(function(){
+var D=Math.PI/180;
+function sb(a,b){return [a[0]-b[0],a[1]-b[1],a[2]-b[2]];}
+function ad(a,b){return [a[0]+b[0],a[1]+b[1],a[2]+b[2]];}
+function sc(a,k){return [a[0]*k,a[1]*k,a[2]*k];}
+function dt(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}
+function cr(a,b){return [a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];}
+function nm(a){var l=Math.sqrt(dt(a,a))||1;return sc(a,1/l);}
+function mean(ps){var s=[0,0,0];ps.forEach(function(p){s=ad(s,p);});return sc(s,1/ps.length);}
+
+/* teleso = {f:[{p:[body],r:[hrana je skutočná],n:normála}],c:stred,op} */
+function fin(faces,op){
+ var all=[];faces.forEach(function(f){f.p.forEach(function(p){all.push(p);});});
+ var c=mean(all);
+ faces.forEach(function(f){var n=cr(sb(f.p[1],f.p[0]),sb(f.p[2],f.p[0]));n=nm(n);if(dt(n,sb(mean(f.p),c))<0)n=sc(n,-1);f.n=n;});
+ return {f:faces,c:c,op:op};
+}
+var FC=[[0,1,3,2],[4,5,7,6],[0,1,5,4],[2,3,7,6],[0,2,6,4],[1,3,7,5]];
+function mkBox(o,u,v,w,op){
+ var ed=[u,v,w],ln=ed.map(function(e){return Math.sqrt(dt(e,e));}),ax=0;
+ if(ln[1]>ln[ax])ax=1;if(ln[2]>ln[ax])ax=2;
+ var k=ln[ax]>480?Math.ceil(ln[ax]/320):1,out=[];
+ for(var i=0;i<k;i++){
+  var oo=ad(o,sc(ed[ax],i/k)),e=[u,v,w].map(function(x,j){return j===ax?sc(x,1/k):x;});
+  var C=[];for(var q=0;q<8;q++)C.push(ad(oo,ad(ad(sc(e[0],q&1),sc(e[1],(q>>1)&1)),sc(e[2],(q>>2)&1))));
+  var faces=FC.map(function(ix){
+   var r=[];for(var j=0;j<4;j++){var a=ix[j],b=ix[(j+1)%4],d=a^b,axis=d===1?0:d===2?1:2;
+    r.push(axis===ax||(((a>>ax)&1)===0&&i===0)||(((a>>ax)&1)===1&&i===k-1));}
+   return {p:ix.map(function(z){return C[z];}),r:r};});
+  out.push(fin(faces,op));
+ }
+ return out;
+}
+function B(x0,x1,y0,y1,z0,z1,op){return mkBox([x0,y0,z0],[x1-x0,0,0],[0,y1-y0,0],[0,0,z1-z0],op);}
+function PR(p0,p1,w,h,hint){var d=sb(p1,p0),s=sb(hint,sc(d,dt(hint,d)/dt(d,d)));s=nm(s);var t=nm(cr(d,s));
+ return mkBox(sb(sb(p0,sc(s,w/2)),sc(t,h/2)),sc(s,w),sc(t,h),d);}
+function LP(c0,c1,sd,td,t){t=t||5;var e=sb(c1,c0);return mkBox(c0,sc(sd,50),sc(td,t),e).concat(mkBox(c0,sc(sd,t),sc(td,50),e));}
+function RLP(a,x,sdx,q0,q1,n){var R=RM(a),c=Math.cos(a*D),s=Math.sin(a*D);return LP(R(x,q0,n),R(x,q1,n),[sdx,0,0],[0,-s,-c]);}
+function LPq(a,q){var R=RM(a),c=Math.cos(a*D),s=Math.sin(a*D);return LP(R(85,q,20),R(1365,q,20),[0,-c,s],[0,-s,-c]);}
+function RLX(a,q,sdq,x0,x1,n){var R=RM(a),c=Math.cos(a*D),s=Math.sin(a*D);return LP(R(x0,q,n),R(x1,q,n),[0,-c*sdq,s*sdq],[0,-s,-c]);}
+function LEG(cx,cy,sdx,tdy,z0,z1){return LP([cx,cy,z0],[cx,cy,z1],[sdx,0,0],[0,tdy,0]);}
+function brace(p0,p1,vt,xc,sdx){var d=nm(sb(p1,p0)),w=sb(vt,p0),wp=sb(w,sc(d,dt(w,d))),td=nm(wp),a=[xc,p0[1],p0[2]],b=[xc,p1[1],p1[2]];return LP(sb(a,sc(td,25)),sb(b,sc(td,25)),[sdx,0,0],td);}
+function cyl(p0,p1,r,n){
+ n=n||10;var d=nm(sb(p1,p0)),h=Math.abs(d[2])>.9?[1,0,0]:[0,0,1],e1=nm(cr(d,h)),e2=cr(d,e1),A=[],Bp=[];
+ for(var i=0;i<n;i++){var t=2*Math.PI*i/n,v=ad(sc(e1,r*Math.cos(t)),sc(e2,r*Math.sin(t)));A.push(ad(p0,v));Bp.push(ad(p1,v));}
+ var faces=[{p:A,r:A.map(function(){return true;})},{p:Bp,r:Bp.map(function(){return true;})}];
+ for(var j=0;j<n;j++){var j2=(j+1)%n;faces.push({p:[A[j],A[j2],Bp[j2],Bp[j]],r:[false,true,false,true]});}
+ return [fin(faces)];
+}
+function slab(pts,ext,op){
+ var T=pts.map(function(p){return ad(p,ext);}),faces=[{p:pts,r:pts.map(function(){return true;})},{p:T,r:T.map(function(){return true;})}];
+ for(var i=0;i<pts.length;i++){var j=(i+1)%pts.length;faces.push({p:[pts[i],pts[j],T[j],T[i]],r:[true,false,true,false]});}
+ return [fin(faces,op)];
+}
+function shift(s,d,flipx){
+ var dd=d;
+ var f=s.f.map(function(F){return {p:F.p.map(function(p){return ad(p,dd);}),r:F.r,n:F.n};});
+ return {f:f,c:ad(s.c,dd),op:s.op,sx:s.sx};
+}
+
+/* ----- geometria v mm: x naprieč (0 = strana motora), y pozdĺž (600 vysoké nohy, 2000 nízke), z hore ----- */
+function RM(a){var c=Math.cos(a*D),s=Math.sin(a*D);return function(x,q,n){return [x,1890-q*c+n*s,980+q*s+n*c];};}
+function RB(a,x0,x1,q0,q1,n0,n1,op){var R=RM(a),o=R(x0,q0,n0);return mkBox(o,sb(R(x1,q0,n0),o),sb(R(x0,q1,n0),o),sb(R(x0,q0,n1),o),op);}
+function RC(a,x0,x1,q,n,r){var R=RM(a);return cyl(R(x0,q,n),R(x1,q,n),r,10);}
+function cat(){var o=[];for(var i=0;i<arguments.length;i++)o=o.concat(arguments[i]);return o;}
+
+var GR={};
+function def(id,name,cnt,mk,an,ex,lab){GR[id]={id:id,name:name,cnt:cnt,mk:mk,an:an,ex:ex||[0,0,320],lab:lab||id};}
+var FL=0; /* 1 = pohľad z druhej strany, súmerné diely sa označujú na bližšej strane */
+function sx(x){return FL?1450-x:x;}
+
+def('K1','noha vysoká 2000 (L 50×50×5)','×2',function(){return cat(LEG(0,575,1,1,0,2000),LEG(1450,575,-1,1,0,2000));},function(){return [sx(0),600,1500];},[0,-420,260]);
+def('K2','noha nízka 1000 (L 50×50×5)','×2',function(){return cat(LEG(0,2025,1,-1,0,1000),LEG(1450,2025,-1,-1,0,1000));},function(){return [sx(0),2000,700];},[0,420,260]);
+def('K6','päta 120×120','×4',function(){return cat(B(-35,85,540,660,-8,0),B(1365,1485,540,660,-8,0),B(-35,85,1940,2060,-8,0),B(1365,1485,1940,2060,-8,0));},function(){return [sx(-35),2060,-4];},[0,0,-260]);
+def('K3','priečnik 1440, v kúte nôh','×4',function(){var o=[];
+ [[5,1],[1445,-1]].forEach(function(c){var x=c[0],s=c[1];
+  o=o.concat(LP([x,580,95],[x,2020,95],[s,0,0],[0,0,1]));
+  o=o.concat(mkBox([x,580,825],[s*5,0,0],[0,0,50],[0,1440,0]),mkBox([x,580,825],[s*50,0,0],[0,0,5],[0,1007,0]),mkBox([x,1672,825],[s*50,0,0],[0,0,5],[0,348,0]),mkBox([x,1587,825],[s*5,0,0],[0,0,5],[0,85,0]));});
+ return o;},function(){return [sx(5),1300,850];},[0,0,380]);
+def('K5','vzpera K5a / K5b','×4',function(){var o=[];[[10,1],[1440,-1]].forEach(function(c){o=o.concat(brace([0,600,1350],[0,1050,850],[0,600,850],c[0],c[1]),brace([0,2000,550],[0,1600,850],[0,2000,850],c[0],c[1]));});return o;},function(){return [sx(10),830,1100];},[0,0,420]);
+def('K9','kolenová vzpera K9','×4',function(){var o=[];[[10,1],[1440,-1]].forEach(function(c){o=o.concat(brace([0,600,450],[0,1000,850],[0,600,850],c[0],c[1]),brace([0,2000,520],[0,1600,120],[0,2000,120],c[0],c[1]));});return o;},function(){return [sx(10),1750,330];},[0,0,300]);
+def('K4','priečnik 1440, v kúte nôh','×2',function(){var o=[];[155,765].forEach(function(z){o=o.concat(LP([5,2020,z],[1445,2020,z],[0,-1,0],[0,0,1]));});return o;},function(){return [700,2020,790];},[0,520,0]);
+def('K7','kotva M12×120','×16',function(){var o=[];[[25,600],[1425,600],[25,2000],[1425,2000]].forEach(function(c){[-40,40].forEach(function(dx){[-40,40].forEach(function(dy){o=o.concat(cyl([c[0]+dx,c[1]+dy,-70],[c[0]+dx,c[1]+dy,22],7,8));});});});return o;},function(){return [sx(-15),2040,10];},[0,0,-300]);
+def('L1','rám lievika 1160×1480','×4',function(){return cat(B(145,1305,480,530,995,1045),B(145,1305,1910,1960,995,1045),B(145,195,530,1910,995,1045),B(1255,1305,530,1910,995,1045));},function(){return [sx(145),1200,1045];},[0,0,300]);
+def('L2','spojka 150','×4',function(){return cat(B(50,145,575,625,1000,1040),B(1305,1400,575,625,1000,1040),B(0,145,1960,2025,1000,1040),B(1305,1450,1960,2025,1000,1040));},function(){return [sx(90),600,1040];},[0,0,320]);
+function hop(){
+ var t=function(x,y){return [x,y,1020];},b=function(x,y){return [x,y,920];},o=[],th=6;
+ var Q=[[t(170,505),t(170,1935),b(330,1650),b(330,540)],[t(1280,505),t(1280,1935),b(1120,1650),b(1120,540)],[t(170,1935),t(1280,1935),b(1120,1650),b(330,1650)],[t(170,505),t(1280,505),b(1120,540),b(330,540)]];
+ Q.forEach(function(q){var n=nm(cr(sb(q[1],q[0]),sb(q[3],q[0])));var cm=mean(q);if(dt(n,sb([725,1200,1020],cm))<0)n=sc(n,-1);o=o.concat(slab(q,sc(n,th)));});
+ return o;}
+def('L3','plechy lievika 2 mm (2 bočné, zadná, predná)','×4',hop,function(){return [sx(170)+(FL?-80:80),1250,980];},[0,0,420]);
+def('K8','horný priečnik 1440, v kúte nôh','×1',function(){return LP([5,580,1925],[1445,580,1925],[0,1,0],[0,0,1]);},function(){return [700,580,1975];},[0,0,320]);
+
+/* koľajnice (a = sklon), súradnice x,q,n */
+def('V1','pravá koľajnica 2150','×1',function(a){return RLP(a,80,1,-700,1450,25);},function(a){return RM(a)(105,700,25);},[-300,0,260]);
+def('V2','ľavá koľajnica 1550','×1',function(a){return RLP(a,1370,-1,-100,1450,25);},function(a){return RM(a)(1345,900,25);},[300,0,260]);
+def('V3','priečny spoj 1280, pod policami','×2',function(a){return cat(LPq(a,-85),LPq(a,1175));},function(a){return RM(a)(700,-60,25);},[0,420,0]);
+/* sito */
+def('S1','rám sita 1500×1200','×1',function(a){return cat(RLP(a,125,1,0,1500,100),RLP(a,1325,-1,0,1500,100),RLX(a,0,1,125,1325,100),RLX(a,1500,-1,125,1325,100));},function(a){return RM(a)(150,1000,100);},[-260,0,360]);
+def('S2','priečna výstuha 1190','×3',function(a){var o=[];[400,770,1150].forEach(function(q){o=o.concat(RB(a,130,1320,q-2.5,q+2.5,60,100));});return o;},function(a){return RM(a)(700,770,100);},[0,0,420]);
+def('S3','pozdĺžna výstuha 1490','×1',function(a){return RB(a,722.5,727.5,5,1495,60,100);},function(a){return RM(a)(725,300,100);},[0,0,560]);
+def('S4','pletivo 2 mm, oko 2 cm','×1',function(a){return RB(a,175,1275,50,1450,98,101,.45);},function(a){return RM(a)(950,1150,101);},[0,0,660]);
+def('S5','prítlačné lišty','×4',function(a){return cat(RB(a,175,1275,50,70,101,106),RB(a,175,1275,1430,1450,101,106),RB(a,175,195,70,1430,101,106),RB(a,1255,1275,70,1430,101,106));},function(a){return RM(a)(185,1250,106);},[0,0,760]);
+def('S6','bočnice a zadná stena','×3',function(a){return cat(RB(a,125,131,0,1500,35,100),RB(a,1319,1325,0,1500,35,100),RB(a,125,1325,1494,1500,35,100));},function(a){return RM(a)(1322,500,70);},[300,0,320]);
+def('S8','konzola ojnice','×1',function(a){return RB(a,70,125,-30,270,76,116);},function(a){return RM(a)(95,100,116);},[-240,0,200]);
+def('V4','koleso Ø100','×4',function(a){var o=[];[340,1260].forEach(function(q){o=o.concat(RC(a,98,124,q,75,50),RC(a,1326,1352,q,75,50));});return o;},function(a){return RM(a)(100,1260,125);},[-260,0,160]);
+def('V6','vodiaca kladka','×4',function(a){var o=[],R=RM(a);[400,1100].forEach(function(q){o=o.concat(cyl(R(64,q,-20),R(64,q,60),14,8),cyl(R(1386,q,-20),R(1386,q,60),14,8));});return o;},function(a){return RM(a)(64,1100,60);},[-300,0,0]);
+def('V7','čap koľajníc Ø20','×2',function(){var a=cyl([40,1890,980],[145,1890,980],10,10),b=cyl([1305,1890,980],[1410,1890,980],10,10);a[0].sx=1;b[0].sx=-1;return cat(a,b);},function(){return [sx(40),1890,980];},[-260,0,0]);
+def('V8','konzola čapu 150','×2',function(){return cat(B(50,66,1830,1980,930,1030),B(1384,1400,1830,1980,930,1030));},function(){return [sx(58),1900,930];},[0,0,-300]);
+function nos(){var o=[];[[50,58,132,140],[1392,1400,1310,1318]].forEach(function(p){o=o.concat(B(p[0],p[1],575,625,1100,1800),B(p[2],p[3],575,625,1100,1800));});return o;}
+def('N1','perforovaný nosník A, B','×4',nos,function(){return [sx(54),600,1740];},[0,0,360]);
+def('N2','mostík 100','×2',function(){return cat(B(50,140,575,625,1090,1100),B(1310,1400,575,625,1090,1100));},function(){return [sx(95),600,1090];},[0,0,-260]);
+def('N3','kolík Ø16 + R-klip','×4',function(a){var zb=980+1290*Math.tan(a*D),k=Math.round((zb-1100)/33),z=1100+33*k,o=[];
+ [[46,146],[1304,1404]].forEach(function(p){o=o.concat(cyl([p[0],600,z],[p[1],600,z],8,8),cyl([p[0],600,z+99],[p[1],600,z+99],8,8));});return o;},function(a){var zb=980+1290*Math.tan(a*D),z=1100+33*Math.round((zb-1100)/33);return [sx(50),600,z];},[0,-380,0]);
+/* motor a pohon (na koľajnici V1, a = sklon) */
+def('M1','konzola motora 650','×2',function(a){return cat(RB(a,-570,80,-475,-425,-25,25),RB(a,-570,80,-655,-605,-25,25));},function(a){return RM(a)(-300,-450,25);},[0,-300,0]);
+def('M2','spojka 180','×1',function(a){return RB(a,-570,-520,-655,-425,-25,25);},function(a){return RM(a)(-545,-540,25);},[-220,0,0]);
+def('M3','doska 300×200×8','×1',function(a){return RB(a,-470,-170,-660,-460,25,33);},function(a){return RM(a)(-320,-460,33);},[0,0,260]);
+def('MO','motor + prevodovka','×1',function(a){var R=RM(a);return cat(RB(a,-300,-100,-632,-488,33,159),cyl(R(-520,-560,96),R(-300,-560,96),55,12));},function(a){return RM(a)(-200,-560,159);},[0,0,380]);
+def('P3','excentrický kotúč Ø120','×1',function(a){var R=RM(a);return cat(cyl(R(-100,-560,96),R(45,-560,96),14,8),cyl(R(25,-560,96),R(45,-560,96),60,14),cyl(R(45,-590,96),R(72,-590,96),6,8));},function(a){return RM(a)(40,-560,160);},[-200,0,300]);
+def('P6','ojnica 610','×1',function(a){return cat(RB(a,62,70,-598,18,76,116),cyl(RM(a)(56,10,96),RM(a)(82,10,96),6,8));},function(a){return RM(a)(66,-300,116);},[-60,0,320]);
+def('M5','kryt','×1',function(a){return RB(a,5,60,-680,-450,55,170,.35);},function(a){return RM(a)(30,-680,170);},[-100,0,420]);
+/* výsyp */
+function chute(a,which){
+ var R=RM(a),TL=R(175,20,90),TR=R(1275,20,90),BR=R(1050,-450,-160),BL=R(400,-450,-160);
+ var nU=nm(cr(sb(TR,TL),sb(BL,TL)));if(nU[2]<0)nU=sc(nU,-1);
+ if(which==='S7')return slab([TL,TR,BR,BL],sc(nU,-5));
+ var o=[];[[TL,BL],[TR,BR]].forEach(function(e){var A=e[0],Bp=e[1],h=sc(nU,155),pts=[A,Bp,ad(Bp,h),ad(A,h)];
+  var n=nm(cr(sb(Bp,A),nU));var side=A[0]<500?1:-1;var ex=sc([1,0,0],5*side);o=o.concat(slab(pts,ex));});
+ return o;
+}
+def('S7','dno výsypu','×1',function(a){return chute(a,'S7');},function(a){var R=RM(a);return R(725,-250,-60);},[0,420,-260]);
+def('S10','bočné steny výsypu','×2',function(a){return chute(a,'S10');},function(a){var R=RM(a);return R(1200,-200,30);},[320,150,-100]);
+def('E','rozvádzač a zásuvka','×1',function(){return cat(B(-130,-30,560,640,1250,1500),cyl([-130,600,1300],[-160,600,1300],12,8));},function(){return [-130,600,1450];},[-360,0,0]);
+/* skladaná zostava koľajníc + sita */
+['RS'].forEach(function(id){});
+def('RS','koľajnice so sitom (zostava z krokov 7 až 9)','×1',function(a){var o=[];['V1','V2','V3','S1','S2','S3','S4','S5','S6','S8','V4','V6'].forEach(function(k){o=o.concat(GR[k].mk(a));});return o;},function(a){return RM(a)(150,1000,100);},[0,0,700],'V1–V6, S1–S8');
+
+/* ----- návod: definície krokov ----- */
+var FR=['K6','K1','K2','K3','K5','K9','K4'],HP=['L1','L2'],HW=['L3'],RL=['V1','V2','V3'],SV=['S1','S2','S3','S4','S5','S6','S8'],WH=['V4','V6'];
+var SUP=['V8','N1','N2','N3'];
+var CFG={
+ 0:{one:1,title:'Takto bude stroj vyzerať hotový',prior:[].concat(FR,HP,HW,['V8','N1','N2','N3','V7','RS','K8','M1','M2','M3','MO','P3','P6','M5','S7','S10','K7','E']),new:[],note:'Obrázky v návode sú ilustračné: tvar plechov a polohy sú orientačné, rozhodujúce sú rozmery z výkresov.'},
+ 2:{new:['K6','K1','K2','K3','K5','K9'],prior:[],detail:1,detail3:1,note:'Hotový bočný rám (2 ks): K3 sú v kúte nôh, osi 120 a 850 od zeme, vzpery K5 a kolenové vzpery K9 smerujú k stredu rámu. Dolu je detail uloženia K3 do kúta nohy.'},
+ 3:{new:['K4'],prior:['K6','K1','K2','K3','K5','K9'],detail:2,note:'Dva rámy spojí K4 na nízkom (výsypovom) konci, v osiach 180 a 790. Vysoký koniec zostáva otvorený pre vjazd vozíka. Dolu je detail rohu nízkej nohy so zasunutými K3 a K4.'},
+ 4:{new:['L1','L2'],prior:FR,note:'Rám lievika L1 sa zavesí do výšky osi 1020 a ukotví spojkami L2.'},
+ 5:{new:['L3'],prior:[].concat(FR,HP),note:'Plechy lievika sú zvarené k rámu L1 a zbiehajú sa smerom dole.'},
+ 6:{sub:1,new:RL,prior:[],note:'Koľajnice sa skladajú mimo stroja na rovnej ploche. V1 je pravá (dlhšia, nesie motor), V2 ľavá.'},
+ 7:{sub:1,new:SV,prior:[],note:'Sito sa skladá samostatne: rám S1 s výstuhami, pletivom a bočnicami, konzola ojnice S8 je na pravej strane.'},
+ 8:{sub:1,new:WH,prior:[].concat(RL,SV),note:'Kolesá V4 dosadajú na police koľajníc, kladky V6 vedú sito bokom.'},
+ 9:{new:SUP,prior:[].concat(FR,HP,HW),note:'Konzoly V8 nesú čap koľajníc, nosníky N1 s kolíkmi N3 držia sklon (pri 20° sú kolíky v zakreslenej polohe).'},
+ 10:{new:['RS','V7'],prior:[].concat(FR,HP,HW,SUP),note:'Zostavu koľajníc so sitom spusti naraz (110 až 130 kg), potom zasuň čapy V7.'},
+ 11:{tilts:[10,30],new:['K8'],hl:['K8','L1','L2','K4'],prior:[].concat(FR,HP,HW,SUP,['V7','RS']),note:'Skontroluj celý rozsah 10° až 30°: nič sa nesmie dotýkať. Potom konečné zvary L1, L2, K4 a K8.'},
+ 12:{new:['M1','M2','M3','MO','P3','P6','M5'],prior:[].concat(FR,HP,HW,SUP,['V7','RS','K8']),note:'Motor je na dolnom predĺžení pravej koľajnice, ojnica P6 spája excentrický kotúč s konzolou S8.'},
+ 13:{new:['S7','S10'],ghost:1,prior:[].concat(FR,HP,HW,SUP,['V7','RS','K8','M1','M2','M3','MO','P3','P6','M5']),note:'Výsyp sa zbieha k fúriku: dno S7 a bočné steny S10 sú pripevnené pod spodným okrajom sita. Fúrik (čiarkovane) nie je súčasť stroja.'},
+ 14:{new:['K7','E'],ghost:1,prior:[].concat(FR,HP,HW,SUP,['V7','RS','K8','M1','M2','M3','MO','P3','P6','M5','S7','S10']),note:'Kotvy K7 cez päty do betónu a rozvádzač pri vysokej nohe. Zapojenie robí elektrikár.'},
+ 15:{one:1,view:1,title:'Hotový stroj, pohľad z ľavej strany (strana rúčok fúrika)',ghost:1,prior:[].concat(FR,HP,HW,SUP,['V7','RS','K8','M1','M2','M3','MO','P3','P6','M5','S7','S10','K7','E']),new:[],note:'Skúšobná prevádzka: sklon nastavuj len pri vypnutom stroji a bez záťaže.'}
+};
+
+/* ----- renderer ----- */
+function View(phi,el){
+ var c=[-Math.sin(phi*D),Math.cos(phi*D),0],e=el*D;
+ var d=[c[0]*Math.cos(e),c[1]*Math.cos(e),Math.sin(e)],r=[-Math.cos(phi*D),-Math.sin(phi*D),0],u=[-c[0]*Math.sin(e),-c[1]*Math.sin(e),Math.cos(e)];
+ var L=nm(ad(ad(sc(r,-.55),sc(u,.9)),sc(d,.55)));
+ return {d:d,r:r,u:u,L:L,pr:function(p){return [dt(p,r),-dt(p,u)];}};
+}
+var UID=0;
+function wireGhost(){
+ var L=[],P=function(a,b){L.push([a,b]);};
+ var x0=325,x1=1125,y0=2040,y1=2640,z0=300,z1=580;
+ [[x0,y0],[x1,y0],[x1,y1],[x0,y1]].forEach(function(p,i,a){var q=a[(i+1)%4];P([p[0],p[1],z0],[q[0],q[1],z0]);P([p[0],p[1],z1],[q[0],q[1],z1]);P([p[0],p[1],z0],[p[0],p[1],z1]);});
+ var cx=195,cy=2340,cz=140;
+ for(var i=0;i<16;i++){var t1=2*Math.PI*i/16,t2=2*Math.PI*(i+1)/16;P([cx,cy+140*Math.cos(t1),cz+140*Math.sin(t1)],[cx,cy+140*Math.cos(t2),cz+140*Math.sin(t2)]);}
+ P([cx,cy,cz],[x0,2340,z0]);
+ [2140,2540].forEach(function(y){P([x1,y,420],[1700,y,420]);P([1000,y,z0],[1000,y,0]);});
+ P([x0,2340,z0+40],[cx,cy,cz]);
+ return L;
+}
+var GHOST=wireGhost();
+
+function items(list,a,hl,dx){
+ var o=[];
+ list.forEach(function(id){GR[id].mk(a).forEach(function(s){o.push({s:s,hl:hl,id:id});});});
+ return o;
+}
+function boundsOf(V,its,extra){
+ var mn=[1e9,1e9],mx=[-1e9,-1e9];
+ function add(p){var q=V.pr(p);if(q[0]<mn[0])mn[0]=q[0];if(q[0]>mx[0])mx[0]=q[0];if(q[1]<mn[1])mn[1]=q[1];if(q[1]>mx[1])mx[1]=q[1];}
+ its.forEach(function(it){it.s.f.forEach(function(f){f.p.forEach(add);});});
+ (extra||[]).forEach(add);
+ return {mn:mn,mx:mx};
+}
+function panel(V,its,B,opt){
+ var W=520,pad=34,k=(W-2*pad)/(B.mx[0]-B.mn[0]),H=Math.round((B.mx[1]-B.mn[1])*k+2*pad);
+ var X=function(p){var q=V.pr(p);return [(q[0]-B.mn[0])*k+pad,(q[1]-B.mn[1])*k+pad];};
+ var o='';
+ if(opt.floor){var F=[[-130,430,0],[1580,430,0],[1580,2170,0],[-130,2170,0]].map(X);o+='<polygon points="'+F.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ')+'" style="fill:var(--bg);stroke:var(--line);stroke-width:1"/>';}
+ var faces=[];
+ its.forEach(function(it){it.s.f.forEach(function(f){if(dt(f.n,V.d)<=1e-6)return;faces.push({f:f,key:dt(it.s.c,V.d),hl:it.hl,op:it.s.op});});});
+ faces.sort(function(a,b){return a.key-b.key;});
+ faces.forEach(function(F){
+  var pts=F.f.p.map(X),sh=Math.max(0,dt(F.f.n,V.L)),pc=Math.round(68+32*sh);
+  var base=F.hl?'var(--accent)':'var(--bar)';
+  var d='M'+pts.map(function(p){return p[0].toFixed(1)+' '+p[1].toFixed(1);}).join('L')+'Z';
+  var allr=F.f.r.every(function(x){return x;});
+  var stroke='stroke:var(--ink);stroke-width:'+(F.hl?1.1:.8)+';stroke-linejoin:round;stroke-linecap:round';
+  var fc='color-mix(in srgb,'+base+' '+pc+'%,#000)';
+  var fill='fill:'+fc+(F.op?';fill-opacity:'+F.op:'');
+  if(allr)o+='<path d="'+d+'" style="'+fill+';'+stroke+'"/>';
+  else{
+   o+='<path d="'+d+'" style="'+fill+';stroke:'+fc+';stroke-width:.9;stroke-linejoin:round'+(F.op?';stroke-opacity:'+F.op:'')+'"/>';
+   var e='';for(var i=0;i<pts.length;i++){if(F.f.r[i]){var a=pts[i],b=pts[(i+1)%pts.length];e+='M'+a[0].toFixed(1)+' '+a[1].toFixed(1)+'L'+b[0].toFixed(1)+' '+b[1].toFixed(1);}}
+   if(e)o+='<path d="'+e+'" style="fill:none;'+stroke+'"/>';
+  }
+ });
+ if(opt.ghost){GHOST.forEach(function(l){var a=X(l[0]),b=X(l[1]);o+='<line x1="'+a[0].toFixed(1)+'" y1="'+a[1].toFixed(1)+'" x2="'+b[0].toFixed(1)+'" y2="'+b[1].toFixed(1)+'" style="stroke:var(--ink2);stroke-width:1.2;stroke-dasharray:5 4"/>';});
+  var gp=X([700,2340,600]);o+='<text class="dt" x="'+gp[0].toFixed(1)+'" y="'+(gp[1]-6).toFixed(1)+'" text-anchor="middle" style="font-size:12px;fill:var(--ink2)">fúrik</text>';}
+ /* šípky a štítky */
+ var placed=[];
+ function hit(r){return placed.some(function(q){return r.x<q.x+q.w&&r.x+r.w>q.x&&r.y<q.y+q.h&&r.y+r.h>q.y;});}
+ (opt.arrows||[]).forEach(function(ar){
+  var a=X(ar[0]),b=X(ar[1]),dx=b[0]-a[0],dy=b[1]-a[1],L=Math.sqrt(dx*dx+dy*dy)||1,ux=dx/L,uy=dy/L;
+  o+='<line x1="'+a[0].toFixed(1)+'" y1="'+a[1].toFixed(1)+'" x2="'+b[0].toFixed(1)+'" y2="'+b[1].toFixed(1)+'" style="stroke:var(--accent);stroke-width:1.8;stroke-dasharray:6 4"/>';
+  o+='<polygon points="'+b[0].toFixed(1)+','+b[1].toFixed(1)+' '+(b[0]-ux*11+uy*5).toFixed(1)+','+(b[1]-uy*11-ux*5).toFixed(1)+' '+(b[0]-ux*11-uy*5).toFixed(1)+','+(b[1]-uy*11+ux*5).toFixed(1)+'" style="fill:var(--accent)"/>';
+ });
+ var cand=[[0,-30],[34,-30],[-34,-30],[0,32],[40,0],[-40,0],[46,-58],[-46,-58],[46,56],[-46,56],[0,-62],[0,64]];
+ (opt.labels||[]).forEach(function(lb){
+  var a=X(lb.p),w=lb.t.length*7.8+12,h=19,best=null;
+  for(var i=0;i<cand.length;i++){var cx=a[0]+cand[i][0]-w/2,cy=a[1]+cand[i][1]-h/2;
+   var r={x:Math.max(2,Math.min(W-w-2,cx)),y:Math.max(2,Math.min(H-h-2,cy)),w:w,h:h};if(!hit(r)){best=r;break;}}
+  if(!best){best={x:Math.max(2,Math.min(W-w-2,a[0]-w/2)),y:Math.max(2,Math.min(H-h-2,a[1]-45)),w:w,h:h};}
+  placed.push(best);
+  o+='<line x1="'+a[0].toFixed(1)+'" y1="'+a[1].toFixed(1)+'" x2="'+(best.x+w/2).toFixed(1)+'" y2="'+(best.y+h/2).toFixed(1)+'" style="stroke:var(--ink);stroke-width:1"/>';
+  o+='<circle cx="'+a[0].toFixed(1)+'" cy="'+a[1].toFixed(1)+'" r="3.2" style="fill:var(--accent-ink);stroke:var(--ink);stroke-width:1"/>';
+  o+='<rect x="'+best.x.toFixed(1)+'" y="'+best.y.toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+h+'" rx="4" style="fill:var(--accent);stroke:var(--ink);stroke-width:.8"/>';
+  o+='<text x="'+(best.x+w/2).toFixed(1)+'" y="'+(best.y+13.5).toFixed(1)+'" text-anchor="middle" style="font:700 12.5px var(--f-mono);fill:var(--accent-ink)">'+lb.t+'</text>';
+ });
+ return '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="'+(opt.alt||'Obrázok kroku')+'">'+o+'</svg>';
+}
+function figEl(cap,s){var f=document.createElement('figure');f.innerHTML='<figcaption>'+cap+'</figcaption>'+s;return f;}
+
+function detail(w4){
+ var V=View(-145,30),ids=[];
+ var leg=LEG(0,2025,1,-1,0,330),plate=B(-35,85,1940,2060,-8,0);
+ var k3=LP([5,1700,95],[5,2020,95],[1,0,0],[0,0,1]),k4=LP([5,2020,155],[330,2020,155],[0,-1,0],[0,0,1]);
+ function it(a,hl){return a.map(function(s){return {s:s,hl:hl};});}
+ function sh(a,v){return a.map(function(s){return shift(s,v);});}
+ var P=it(leg,false).concat(it(plate,false)),ex3=[0,-300,0],ex4=[320,0,0];
+ var pre=P.concat(it(sh(k3,ex3),true)),post=P.concat(it(k3,true));
+ var arr=[[[5,1700+ex3[1]+100,70],[5,1800,70]]],lb1=[{t:'K2',p:[0,2025,200]}],lb2=[{t:'K2',p:[0,2025,200]},{t:'K3',p:[5,1850,70]}];
+ lb1.push({t:'K3',p:[5,1700+ex3[1]+150,70]});
+ if(w4){pre=pre.concat(it(k4,true));post=post.concat(it(k4,true));
+  pre=pre.filter(function(x){return true;});
+  var k4e=it(sh(k4,ex4),true);pre=pre.slice(0,pre.length-k4.length).concat(k4e);
+  arr.push([[150+ex4[0],2020,180],[150,2020,180]]);
+  lb1.push({t:'K4',p:[150+ex4[0],2020,210]});lb2.push({t:'K4',p:[150,2020,210]});}
+ var B0=boundsOf(V,pre.concat(post));
+ var wrap=document.createElement('div');wrap.className='ikw';
+ var g=document.createElement('div');g.className='ik';
+ g.appendChild(figEl('Detail: roh nízkej nohy, pohľad zvnútra stroja (pred zváraním)',panel(V,pre,B0,{floor:0,arrows:arr,labels:lb1,alt:'Detail pred'})));
+ g.appendChild(figEl('Detail: po zasunutí do kúta nohy',panel(V,post,B0,{floor:0,labels:lb2,alt:'Detail po'})));
+ wrap.appendChild(g);
+ var t=document.createElement('p');t.className='ikn';
+ t.textContent=w4?'K3 aj K4 sú rezané kolmo a zasunuté do kúta nohy. Každý sa o nohu opiera dvoma plochami: zvislým ramenom o rameno nohy rovnobežné s nosníkom (zvar po hrane) a čelom o druhé rameno nohy (zvar po čele). K3 a K4 majú medzi sebou 10 mm medzeru, preto sa v rohu nezrazia. V obrázku je noha skrátená.':'K3 je rezaný kolmo na 1440 a zasunutý do kúta nohy: zvislým ramenom naľahne na rameno nohy rovnobežné s nosníkom (zvar po hrane, aspoň 40 mm), čelom dosadne na druhé rameno nohy (zvar po čele). V obrázku je noha skrátená a pridaný len spodný K3.';
+ wrap.appendChild(t);return wrap;
+}
+function detail3(){
+ var V=View(-145,26);
+ function it(a,hl){return a.map(function(s){return {s:s,hl:hl};});}
+ function sh(a,v){return a.map(function(s){return shift(s,v);});}
+ var leg=LEG(0,2025,1,-1,0,1000),plate=B(-35,85,1940,2060,-8,0);
+ var x=5,s=1;
+ var k3b=[].concat(mkBox([x,1450,825],[5,0,0],[0,0,50],[0,570,0]),mkBox([x,1450,825],[50,0,0],[0,0,5],[0,137,0]),mkBox([x,1672,825],[50,0,0],[0,0,5],[0,348,0]),mkBox([x,1587,825],[5,0,0],[0,0,5],[0,85,0]));
+ var k5=brace([0,2000,550],[0,1600,850],[0,2000,850],10,1),ex=[0,260,-190];
+ var P=it(leg,false).concat(it(plate,false)).concat(it(k3b,false));
+ var pre=P.concat(it(sh(k5,ex),true)),post=P.concat(it(k5,true));
+ var B0=boundsOf(V,pre.concat(post));
+ var lb=function(k5p){return [{t:'K2',p:[0,2025,300]},{t:'K3b',p:[5,1520,850]},{t:'K5b',p:k5p},{t:'okno',p:[30,1630,827]}];};
+ var wrap=document.createElement('div');wrap.className='ikw';
+ var g=document.createElement('div');g.className='ik';
+ g.appendChild(figEl('Detail K5b a K3b: vzpera pred zasunutím do okna',panel(V,pre,B0,{floor:0,arrows:[[[10,1800+ex[1],700+ex[2]*0],[10,1800,700]]],labels:lb([10,1800+ex[1],700+ex[2]]),alt:'Detail K5b pred'})));
+ g.appendChild(figEl('Detail K5b a K3b: vzpera prechádza oknom v K3b',panel(V,post,B0,{floor:0,labels:lb([10,1800,700]),alt:'Detail K5b po'})));
+ wrap.appendChild(g);
+ var t=document.createElement('p');t.className='ikn';t.textContent='Okno 45 × 85 mm vo vodorovnom ramene horného K3b: vzpera K5b ním prechádza a zvislým ramenom naľahne na zvislé rameno K3b. Okno je asi 348 mm od konca K3b pri nízkej nohe. Pri montáži polohu spresni priložením vzpery.';
+ wrap.appendChild(t);return wrap;
+}
+function build(k){
+ var c=CFG[k];if(!c)return null;
+ var wrap=document.createElement('div');wrap.className='ikw';
+ var a=c.sub?0:20;
+ var chips=document.createElement('div');chips.className='ikp';
+ c.new.forEach(function(id){var g=GR[id];var s=document.createElement('span');s.innerHTML='<b>'+g.lab+'</b> '+g.name+' '+g.cnt;chips.appendChild(s);});
+ var grid=document.createElement('div');grid.className='ik'+(c.one?' one':'');
+ function setView(v){FL=v;return View(v?-32:32,26);}
+ if(c.one){
+  var V=setView(c.view||0);
+  var its=items(c.prior,20,false);
+  var B0=boundsOf(V,its,GHOST.reduce(function(r,l){return r.concat(l);},[]));
+  var s=panel(V,its,B0,{floor:1,ghost:c.ghost||!c.view,alt:c.title});
+  grid.appendChild(figEl(c.title,s));
+ }else if(c.tilts){
+  var V2=setView(0);
+  c.tilts.forEach(function(t){
+   var hl=c.hl||[];
+   var base=items(c.prior.filter(function(id){return hl.indexOf(id)<0;}),t,false).concat(items(c.new,t,true)).concat(items(hl.filter(function(id){return c.new.indexOf(id)<0;}),t,true));
+   var ref=items(c.prior,20,false).concat(items(c.new,20,true));
+   var B1=boundsOf(V2,ref.concat(items(['RS'],10,false)).concat(items(['RS'],30,false)));
+   var lbs=c.new.map(function(id){return {t:GR[id].lab,p:GR[id].an(t)};});
+   hl.forEach(function(id){if(c.new.indexOf(id)<0)lbs.push({t:GR[id].lab,p:GR[id].an(t)});});
+   grid.appendChild(figEl('Sklon '+t+'°: skontroluj voľné priestory',panel(V2,base,B1,{floor:1,labels:lbs,alt:'Sklon '+t+'°'})));
+  });
+ }else{
+  var V3=setView(0);
+  var P=items(c.prior,a,false);
+  var N1=items(c.new,a,true);
+  var exN=[],arrows=[],lbs2=[],lbs3=[];
+  c.new.forEach(function(id){var g=GR[id];
+   g.mk(a).forEach(function(s){var m=s.sx||1;exN.push({s:shift(s,[g.ex[0]*m,g.ex[1],g.ex[2]]),hl:true,id:id});});
+   var an=g.an(a);arrows.push([ad(an,g.ex),an]);
+   lbs2.push({t:g.lab,p:ad(an,g.ex)});lbs3.push({t:g.lab,p:an});});
+  var ALL=c.sub?P.concat(N1).concat(exN):items(c.prior,20,false).concat(items(['RS','V7','K8','MO','P6','S7','S10'],20,false)).concat(N1).concat(exN);
+  var B2=boundsOf(V3,ALL,c.ghost?GHOST.reduce(function(r,l){return r.concat(l);},[]):[]);
+  var fl=c.sub?0:1;
+  grid.appendChild(figEl('Pred krokom: diely, ktoré pridávaš (šípky ukazujú kam)',panel(V3,P.concat(exN),B2,{floor:fl,ghost:c.ghost,arrows:arrows,labels:lbs2,alt:'Pred krokom'})));
+  grid.appendChild(figEl('Po kroku: stroj vyzerá takto',panel(V3,P.concat(N1),B2,{floor:fl,ghost:c.ghost,labels:lbs3,alt:'Po kroku'})));
+ }
+ var tt=document.createElement('p');tt.className='ikn';tt.textContent=c.note||'';
+ if(c.new.length)wrap.appendChild(chips);
+ wrap.appendChild(grid);if(c.note)wrap.appendChild(tt);if(c.detail)wrap.appendChild(detail(c.detail===2));if(c.detail3)wrap.appendChild(detail3());
+ return wrap;
+}
+return {build:build,has:function(k){return !!CFG[k];}};
+})();
+
+function guide(){
+ var host=document.getElementById('gd');if(!host)return;
+ var saved={};try{saved=JSON.parse(localStorage.getItem('osv-steps')||'{}');}catch(e){}
+ STEPS.forEach(function(st,k){
+  var d=document.createElement('details');d.className='part';d.open=(k<2);
+  var sm=document.createElement('summary');
+  sm.innerHTML='<span class="pc">'+(k+1)+'</span><span class="pt">'+st.t+'</span>';
+  d.appendChild(sm);
+  var b=document.createElement('div');b.className='stp';
+  if(st.p){var pp=document.createElement('p');pp.className='pn';pp.textContent='Dielce: '+st.p;b.appendChild(pp);}
+  if(ISO.has(k)){var ih=document.createElement('div');ih.className='ikh';b.appendChild(ih);
+   var fillIso=function(){if(ih.getAttribute('data-d'))return;ih.setAttribute('data-d','1');try{var e=ISO.build(k);if(e)ih.appendChild(e);}catch(err){ih.textContent='Obrázok sa nepodarilo vykresliť.';}};
+   if(d.open)fillIso();d.addEventListener('toggle',function(){if(d.open)fillIso();});}
+  if(st.fig==='frame')b.appendChild(frameFig());
+  var ol=document.createElement('ol');
+  st.i.forEach(function(x){var li=document.createElement('li');li.textContent=x;ol.appendChild(li);});
+  b.appendChild(ol);
+  if(st.chk){var c=document.createElement('p');c.className='chk';c.textContent='Kontrola: '+st.chk;b.appendChild(c);}
+  var lab=document.createElement('label');lab.className='done';
+  var cb=document.createElement('input');cb.type='checkbox';cb.checked=!!saved[k];
+  cb.addEventListener('change',function(){saved[k]=cb.checked;try{localStorage.setItem('osv-steps',JSON.stringify(saved));}catch(e){}});
+  lab.appendChild(cb);lab.appendChild(document.createTextNode(' Hotovo'));
+  b.appendChild(lab);
+  d.appendChild(b);host.appendChild(d);
+ });
+}
+guide();
+
+})();
+
+</script>
+</div>
+<script data-goatcounter="https://jasvarc.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body></html>
